@@ -8,6 +8,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 
 class CurationError(RuntimeError):
@@ -27,7 +28,7 @@ def load_curated_source(path: Path) -> CuratedSource:
             data = json.load(handle)
     except (OSError, json.JSONDecodeError) as exc:
         raise CurationError(f"invalid curated source: {path}") from exc
-    if not isinstance(data, dict) or data.get("schema") != 1:
+    if not isinstance(data, dict) or type(data.get("schema")) is not int or data["schema"] != 1:
         raise CurationError("unsupported curated source schema")
     source_id = data.get("source_id")
     prefix = data.get("name_prefix")
@@ -52,7 +53,18 @@ def parse_spider_reference(reference: str) -> tuple[str, str, str]:
     match = _SPIDER_REFERENCE.fullmatch(reference)
     if match is None:
         raise CurationError("invalid spider reference")
-    return match.group(1), match.group(2), match.group(3)
+    source_url = match.group(1)
+    if any(character.isspace() for character in source_url):
+        raise CurationError("invalid spider reference")
+    try:
+        parsed = urlparse(source_url)
+        if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+            raise CurationError("invalid spider reference")
+        if parsed.username is not None or parsed.password is not None:
+            raise CurationError("invalid spider reference")
+    except ValueError as exc:
+        raise CurationError("invalid spider reference") from exc
+    return source_url, match.group(2), match.group(3)
 
 
 def select_curated_sites(config: dict, policy: CuratedSource, jar: str) -> list[dict]:

@@ -1,4 +1,6 @@
 import unittest
+import json
+import tempfile
 from pathlib import Path
 
 from hometv.curation import (
@@ -6,6 +8,7 @@ from hometv.curation import (
     CuratedSource,
     load_curated_source,
     merge_curated_sites,
+    parse_spider_reference,
     select_curated_sites,
 )
 
@@ -15,8 +18,40 @@ class CurationTests(unittest.TestCase):
         policy = load_curated_source(Path("sources/wanger-curated.json"))
         self.assertEqual(policy.source_id, "wangerxiao")
         self.assertEqual(policy.name_prefix, "🐮")
-        self.assertEqual(len(policy.keys), 35)
-        self.assertEqual(len(set(policy.keys)), 35)
+        self.assertEqual(policy.keys, (
+            "二小", "玩偶", "AiNewGuanYing", "AiQwMkv", "NewZhiZhen", "AiNewLibvio",
+            "WexHanXiaoQuan", "WexAiGuaZi", "WexAiDuBoKu", "WexAiYueYue", "WexAiWenCai",
+            "WexAiV6DaShiXiong", "WexAiV6TeGou", "賤賤", "WexAiYiYs", "WexAiReBo",
+            "WexAiBoBo", "WexAiIkanBot", "DuanJuAiHaoKan", "DuanJuAiQiMiao", "DuanJuAiXingYa",
+            "AnimeXiFan", "AnimeCiYuanCheng", "AnimeAiMiaoWu", "ChildrenAiBaoBao", "ChildrenAiBeiWa",
+            "少儿教育", "小学课堂", "MusicAiLiYuan", "MusicAiIKtv", "MusicAiKuWo",
+            "SportAiFeiQiu", "SportAiGuaZi", "SportAiKanQiuTong", "SportAiKanqiu"
+        ))
+
+    def test_policy_schema_must_be_exact_integer_one(self):
+        source = {"schema": True, "source_id": "x", "name_prefix": "🐮", "keys": ["a"]}
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "policy.json"
+            path.write_text(json.dumps(source), encoding="utf-8")
+            with self.assertRaises(CurationError):
+                load_curated_source(path)
+            source["schema"] = 1.0
+            path.write_text(json.dumps(source), encoding="utf-8")
+            with self.assertRaises(CurationError):
+                load_curated_source(path)
+
+    def test_spider_reference_requires_valid_http_url(self):
+        self.assertEqual(
+            parse_spider_reference("https://repo.example/spider.jpg;md5;" + "a" * 32),
+            ("https://repo.example/spider.jpg", "md5", "a" * 32),
+        )
+        for reference in (
+            "https://repo.example/ bad.jpg;md5;" + "a" * 32,
+            "https://user:pass@repo.example/spider.jpg;md5;" + "a" * 32,
+            "https:///spider.jpg;md5;" + "a" * 32,
+        ):
+            with self.assertRaises(CurationError):
+                parse_spider_reference(reference)
 
     def test_selection_preserves_upstream_order_and_fields(self):
         policy = CuratedSource("wangerxiao", "🐮", ("b", "a"))
