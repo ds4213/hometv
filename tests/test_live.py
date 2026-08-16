@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -132,6 +133,42 @@ class LiveTests(unittest.TestCase):
                 with self.assertRaisesRegex(PlaylistError, message):
                     validate_playlist(raw, "us")
 
+    def test_validation_rejects_sensitive_or_private_url_metadata(self):
+        valid = make_playlist(20, False, False)
+        secret_header = valid.replace(
+            b"#EXTM3U",
+            b'#EXTM3U x-tvg-url="https://epg.example/guide.xml?token=secret-value"',
+        )
+        with self.assertRaisesRegex(PlaylistError, "sensitive query"):
+            validate_playlist(secret_header, "us")
+        private_logo = valid.replace(
+            b"#EXTINF:-1",
+            b'#EXTINF:-1 tvg-logo="https://192.168.1.20/logo.png"',
+            1,
+        )
+        with self.assertRaisesRegex(PlaylistError, "private address"):
+            validate_playlist(private_logo, "us")
+
+    def test_validation_rejects_ambiguous_hosts_and_publishes_rejection_health(self):
+        valid = make_playlist(20, False, False)
+        for host in [b"localhost", b"2130706433", b"0x7f000001", b"0177.0.0.1", b"127.1", b"bad host"]:
+            with self.subTest(host=host):
+                with self.assertRaises(PlaylistError):
+                    validate_playlist(valid.replace(b"media.example", host, 1), "us")
+
+        destination = self.root / "auto-us.m3u"
+        previous = make_playlist(40, False, False).replace(
+            b"https://media.example/0.m3u8", b"https://[2001:db8::1"
+        )
+        destination.write_bytes(previous)
+        report = publish_playlist(valid, destination, "us", self.root / "health.json")
+        self.assertEqual(report.channel_count, 20)
+
+        bad_port = valid.replace(b"media.example", b"media.example:99999", 1)
+        with self.assertRaises(PlaylistError):
+            publish_playlist(bad_port, destination, "us", self.root / "health.json")
+        self.assertEqual(json.loads((self.root / "health.json").read_text(encoding="utf-8"))["status"], "rejected")
+
     def test_cn_requires_cctv_and_satellite_and_publish_is_atomic(self):
         many = make_playlist(40, include_cctv=True, include_satellite=True)
         destination = self.root / "auto-cn.m3u"
@@ -161,6 +198,31 @@ class LiveTests(unittest.TestCase):
         header, entries = parse_m3u(merge_playlists([first, second]))
         self.assertEqual(header, "#EXTM3U first")
         self.assertEqual([(entry.name, entry.url) for entry in entries], [("One", "https://media.example/one"), ("Two", "https://media.example/two")])
+
+    def test_merge_deduplicates_casefolded_pairs_from_first_input(self):
+        first = b"#EXTM3U\n#EXTINF:-1,One\nhttps://media.example/one\n#EXTINF:-1,ONE\nhttps://media.example/one\n"
+        second = b"#EXTM3U\n#EXTINF:-1,one\nhttps://media.example/one\n#EXTINF:-1,Two\nhttps://media.example/two\n"
+        _header, entries = parse_m3u(merge_playlists([first, second]))
+        self.assertEqual([(entry.name, entry.url) for entry in entries], [("One", "https://media.example/one"), ("Two", "https://media.example/two")])
+
+    def test_publication_uses_unique_same_directory_temporary_files(self):
+        destination = self.root / "auto-us.m3u"
+        health = self.root / "health.json"
+        real_replace = os.replace
+        temporary_paths: list[Path] = []
+
+        def replace(source, target):
+            temporary_paths.append(Path(source))
+            return real_replace(source, target)
+
+        with patch("hometv.live.os.replace", side_effect=replace):
+            publish_playlist(make_playlist(20, False, False), destination, "us", health)
+            publish_playlist(make_playlist(20, False, False), destination, "us", health)
+
+        self.assertEqual(len(temporary_paths), 4)
+        self.assertEqual(len(set(temporary_paths)), 4)
+        self.assertTrue(all(path.parent == self.root for path in temporary_paths))
+        self.assertTrue(all(not path.exists() for path in temporary_paths))
 
     def test_publish_acceptance_writes_report_and_sanitizes_rejection_error(self):
         destination = self.root / "auto-us.m3u"
