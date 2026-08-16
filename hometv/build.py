@@ -9,6 +9,13 @@ from pathlib import Path, PurePosixPath
 import urllib.error
 import urllib.request
 
+from .curation import (
+    CuratedSource,
+    merge_curated_sites,
+    parse_spider_reference,
+    select_curated_sites,
+)
+
 
 MAX_MIRROR_BYTES = 25 * 1024 * 1024
 USER_AGENT = "HomeTV-Config-Manager/1.0"
@@ -57,6 +64,7 @@ class BuildError(RuntimeError):
 class MirrorRequest:
     source_url: str
     repository_path: str
+    expected_md5: str = ""
 
 
 @dataclass(frozen=True)
@@ -119,6 +127,33 @@ def build_cn(config: dict, gitee_base: str) -> BuildResult:
     return BuildResult(config=result, mirrors=tuple(mirrors.values()))
 
 
+def build_curated_vod(
+    nitan: dict,
+    wanger: dict,
+    policy: CuratedSource,
+    region: str,
+    github_base: str,
+    gitee_base: str,
+) -> BuildResult:
+    if region == "us":
+        base = BuildResult(config=build_us(nitan), mirrors=())
+        regional_base = github_base
+    elif region == "cn":
+        base = build_cn(nitan, gitee_base)
+        regional_base = gitee_base
+    else:
+        raise BuildError(f"unsupported region: {region}")
+
+    source_url, _algorithm, digest = parse_spider_reference(wanger.get("spider"))
+    repository_path = "vendor/wanger/spider.jpg"
+    jar = f"{_target(regional_base, repository_path)};md5;{digest}"
+    selected = select_curated_sites(wanger, policy, jar)
+    return BuildResult(
+        config=merge_curated_sites(base.config, selected),
+        mirrors=base.mirrors + (MirrorRequest(source_url, repository_path, digest),),
+    )
+
+
 def _safe_path(root: Path, repository_path: str) -> Path:
     relative = PurePosixPath(repository_path)
     if relative.is_absolute() or ".." in relative.parts:
@@ -160,6 +195,12 @@ def mirror_files(
         if _is_html(raw, content_type):
             raise BuildError(f"{item.source_url}: mirror response is HTML")
 
+        md5 = ""
+        if item.expected_md5:
+            md5 = hashlib.md5(raw).hexdigest()
+            if md5 != item.expected_md5.lower():
+                raise BuildError(f"{item.source_url}: MD5 mismatch")
+
         destination.parent.mkdir(parents=True, exist_ok=True)
         temp_path = destination.with_name(destination.name + ".tmp")
         try:
@@ -175,6 +216,9 @@ def mirror_files(
                 "sha256": hashlib.sha256(raw).hexdigest(),
             }
         )
+        if item.expected_md5:
+            records[-1]["expected_md5"] = item.expected_md5
+            records[-1]["md5"] = md5
 
     manifest = {
         "generated_at": datetime.now(timezone.utc).isoformat(),

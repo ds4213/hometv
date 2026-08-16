@@ -5,7 +5,15 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from hometv.build import BuildError, build_cn, build_us, mirror_files
+from hometv.build import (
+    BuildError,
+    MirrorRequest,
+    build_cn,
+    build_curated_vod,
+    build_us,
+    mirror_files,
+)
+from hometv.curation import CuratedSource
 
 
 GITEE_BASE = "https://gitee.com/ds4213tv/hometv/raw/main"
@@ -74,6 +82,13 @@ class FakeResponse:
 
 
 class BuildTests(unittest.TestCase):
+    def setUp(self):
+        self._temporary_directory = tempfile.TemporaryDirectory()
+        self.root = Path(self._temporary_directory.name)
+
+    def tearDown(self):
+        self._temporary_directory.cleanup()
+
     def test_us_build_is_an_independent_copy(self):
         original = fixture()
         result = build_us(original)
@@ -144,6 +159,48 @@ class BuildTests(unittest.TestCase):
             with self.assertRaisesRegex(BuildError, "HTML"):
                 mirror_files((request,), root)
             self.assertEqual(path.read_bytes(), b"known-good")
+
+    def test_curated_build_keeps_nitan_global_and_isolates_wanger(self):
+        policy = CuratedSource("wangerxiao", "🐮", ("wang",))
+        nitan = {"spider": "https://nitan/spider.png", "sites": [{"key": "nitan", "name": "泥潭"}], "lives": []}
+        wanger = {"spider": "https://upstream/spider.jpg;md5;0123456789abcdef0123456789abcdef", "sites": [
+            {"key": "wang", "name": "王", "type": 3, "api": "csp_Wang", "ext": {"keep": True}}
+        ]}
+        us = build_curated_vod(nitan, wanger, policy, "us", "https://raw.githubusercontent.com/o/r/main", "https://gitee.com/o/r/raw/main")
+        cn = build_curated_vod(nitan, wanger, policy, "cn", "https://raw.githubusercontent.com/o/r/main", "https://gitee.com/o/r/raw/main")
+        self.assertEqual(us.config["spider"], nitan["spider"])
+        self.assertEqual(us.config["sites"][1]["jar"], "https://raw.githubusercontent.com/o/r/main/vendor/wanger/spider.jpg;md5;0123456789abcdef0123456789abcdef")
+        self.assertEqual(cn.config["sites"][1]["jar"], "https://gitee.com/o/r/raw/main/vendor/wanger/spider.jpg;md5;0123456789abcdef0123456789abcdef")
+        self.assertEqual(cn.config["sites"][1]["ext"], {"keep": True})
+        self.assertEqual([item.repository_path for item in us.mirrors], ["vendor/wanger/spider.jpg"])
+
+    @patch("urllib.request.urlopen")
+    def test_wanger_mirror_rejects_md5_mismatch_and_keeps_previous(self, urlopen):
+        destination = self.root / "vendor/wanger/spider.jpg"
+        destination.parent.mkdir(parents=True)
+        destination.write_bytes(b"known-good")
+        urlopen.return_value = FakeResponse(b"wrong", "image/jpeg")
+        request = MirrorRequest("https://upstream/spider.jpg", "vendor/wanger/spider.jpg", "0123456789abcdef0123456789abcdef")
+        with self.assertRaisesRegex(BuildError, "MD5 mismatch"):
+            mirror_files((request,), self.root)
+        self.assertEqual(destination.read_bytes(), b"known-good")
+
+    @patch("urllib.request.urlopen")
+    def test_wanger_mirror_records_expected_and_actual_md5(self, urlopen):
+        urlopen.return_value = FakeResponse(b"verified", "image/jpeg")
+        request = MirrorRequest(
+            "https://upstream/spider.jpg",
+            "vendor/wanger/spider.jpg",
+            "723aa82a83c278d5e7e7be9b109b406a",
+        )
+        manifest = mirror_files((request,), self.root)
+        self.assertEqual(
+            manifest["files"][0].get("expected_md5"),
+            "723aa82a83c278d5e7e7be9b109b406a",
+        )
+        self.assertEqual(
+            manifest["files"][0].get("md5"), "723aa82a83c278d5e7e7be9b109b406a"
+        )
 
 
 if __name__ == "__main__":
