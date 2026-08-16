@@ -111,6 +111,136 @@ def validate_config(config: dict, region: str) -> list[Finding]:
     return findings
 
 
+def validate_live_config(config: dict, region: str) -> list[Finding]:
+    if region not in {"us", "cn"}:
+        return [Finding("error", "invalid-region", f"unsupported region: {region}")]
+    if not isinstance(config, dict):
+        return [Finding("error", "invalid-live-config", "configuration must be an object")]
+
+    findings: list[Finding] = []
+    lives = config.get("lives")
+    if not isinstance(lives, list) or not lives:
+        return [Finding("error", "invalid-lives", "lives must be a non-empty list", "$.lives")]
+
+    names: set[str] = set()
+    urls: set[str] = set()
+    boot_count = 0
+    for index, live in enumerate(lives):
+        path = f"$.lives[{index}]"
+        if not isinstance(live, dict):
+            findings.append(Finding("error", "invalid-live", "live must be an object", path))
+            continue
+
+        name = live.get("name")
+        if not isinstance(name, str) or not name:
+            findings.append(
+                Finding(
+                    "error",
+                    "invalid-live-name",
+                    "name must be a non-empty string",
+                    f"{path}.name",
+                )
+            )
+        else:
+            if name in names:
+                findings.append(
+                    Finding(
+                        "error",
+                        "duplicate-live-name",
+                        f"duplicate live name: {name}",
+                        f"{path}.name",
+                    )
+                )
+            names.add(name)
+
+        url = live.get("url")
+        parsed = urllib.parse.urlsplit(url) if isinstance(url, str) else None
+        valid_url = (
+            isinstance(url, str)
+            and bool(url)
+            and parsed is not None
+            and parsed.scheme in {"http", "https"}
+            and bool(parsed.netloc)
+        )
+        if not valid_url:
+            findings.append(
+                Finding(
+                    "error",
+                    "invalid-live-url",
+                    "url must be an HTTP(S) URL",
+                    f"{path}.url",
+                )
+            )
+        else:
+            if url in urls:
+                findings.append(
+                    Finding(
+                        "error",
+                        "duplicate-live-url",
+                        f"duplicate live URL: {url}",
+                        f"{path}.url",
+                    )
+                )
+            urls.add(url)
+
+        if live.get("boot") is True:
+            boot_count += 1
+
+        ua = live.get("ua")
+        if not isinstance(ua, str) or not ua:
+            findings.append(
+                Finding(
+                    "error",
+                    "invalid-live-ua",
+                    "ua must be a non-empty string",
+                    f"{path}.ua",
+                )
+            )
+
+        timeout = live.get("timeout")
+        if not isinstance(timeout, int) or isinstance(timeout, bool) or timeout < 1:
+            findings.append(
+                Finding(
+                    "error",
+                    "invalid-live-timeout",
+                    "timeout must be an integer >= 1",
+                    f"{path}.timeout",
+                )
+            )
+
+    if boot_count != 1:
+        findings.append(
+            Finding(
+                "error",
+                "invalid-live-boot-count",
+                "exactly one live must set boot to true",
+                "$.lives",
+            )
+        )
+
+    for path, value in _strings(config):
+        if not value.startswith(("http://", "https://")):
+            continue
+        parsed = urllib.parse.urlsplit(value)
+        host = (parsed.hostname or "").lower()
+        if parsed.scheme == "http" and host not in {"127.0.0.1", "localhost"}:
+            findings.append(Finding("warning", "cleartext-http", "cleartext HTTP dependency", path))
+        if region == "cn" and (
+            host == "github.com"
+            or host.endswith(".github.com")
+            or host == "raw.githubusercontent.com"
+        ):
+            findings.append(
+                Finding(
+                    "error",
+                    "mainland-github-url",
+                    "mainland configuration contains a GitHub dependency",
+                    path,
+                )
+            )
+    return findings
+
+
 def _sanitize_url(url: str) -> str:
     parsed = urllib.parse.urlsplit(url)
     host = parsed.netloc.rsplit("@", 1)[-1]

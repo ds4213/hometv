@@ -10,6 +10,7 @@ from hometv.build import (
     MirrorRequest,
     build_cn,
     build_curated_vod,
+    build_live_config,
     build_us,
     mirror_files,
 )
@@ -17,6 +18,7 @@ from hometv.curation import CuratedSource
 
 
 GITEE_BASE = "https://gitee.com/ds4213tv/hometv/raw/main"
+GITHUB_BASE = "https://raw.githubusercontent.com/ds4213/hometv/main"
 
 
 def fixture():
@@ -135,6 +137,36 @@ class BuildTests(unittest.TestCase):
         result = build_us(fixture())
         names = [live["name"] for live in result["lives"]]
         self.assertEqual(names, ["Kimentanm"])
+
+    def test_live_configs_have_three_ordered_regional_sources(self):
+        cn = build_live_config("cn", GITHUB_BASE, GITEE_BASE)
+        us = build_live_config("us", GITHUB_BASE, GITEE_BASE)
+
+        expected_names = [
+            "HomeTV 自动（中国）",
+            "HomeTV 备用（Kimentanm）",
+            "HomeTV 临时赛事",
+        ]
+        self.assertEqual([item["name"] for item in cn["lives"]], expected_names)
+        self.assertEqual([item["name"] for item in us["lives"]], expected_names)
+        self.assertTrue(cn["lives"][0]["boot"])
+        self.assertEqual(sum(bool(item.get("boot")) for item in cn["lives"]), 1)
+        self.assertIn("vendor/live/auto-cn.m3u", cn["lives"][0]["url"])
+        self.assertIn("vendor/live/auto-us.m3u", us["lives"][0]["url"])
+        self.assertIn("vendor/live/kimentanm.m3u", cn["lives"][1]["url"])
+        self.assertNotIn("github", json.dumps(cn).lower())
+        self.assertEqual(cn["lives"][0]["ua"], "okhttp/4.12.0")
+        self.assertEqual(cn["lives"][0]["timeout"], 15)
+        self.assertEqual(
+            cn["lives"][1]["epg"],
+            "https://epg.aptv.app/pp.xml.gz,https://epg.aptv.app/xml",
+        )
+        self.assertEqual(cn["lives"][2]["epg"], "https://epg.zsdc.eu.org/t.xml")
+        self.assertEqual(cn["lives"][2]["url"], "http://82.156.243.185:33389/fwc.m3u")
+
+    def test_live_config_rejects_unknown_region(self):
+        with self.assertRaisesRegex(BuildError, "unsupported region: eu"):
+            build_live_config("eu", GITHUB_BASE, GITEE_BASE)
 
     @patch("urllib.request.urlopen")
     def test_mirror_files_writes_assets_and_manifest(self, urlopen):

@@ -154,6 +154,43 @@ def build_curated_vod(
     )
 
 
+def build_live_config(region: str, github_base: str, gitee_base: str) -> dict:
+    if region == "us":
+        base = github_base
+    elif region == "cn":
+        base = gitee_base
+    else:
+        raise BuildError(f"unsupported region: {region}")
+
+    return {
+        "lives": [
+            {
+                "name": "HomeTV 自动（中国）",
+                "url": _target(base, f"vendor/live/auto-{region}.m3u"),
+                "boot": True,
+                "ua": "okhttp/4.12.0",
+                "timeout": 15,
+            },
+            {
+                "name": "HomeTV 备用（Kimentanm）",
+                "url": _target(base, "vendor/live/kimentanm.m3u"),
+                "boot": False,
+                "ua": "okhttp/4.12.0",
+                "timeout": 15,
+                "epg": "https://epg.aptv.app/pp.xml.gz,https://epg.aptv.app/xml",
+            },
+            {
+                "name": "HomeTV 临时赛事",
+                "url": "http://82.156.243.185:33389/fwc.m3u",
+                "boot": False,
+                "ua": "okhttp/4.12.0",
+                "timeout": 15,
+                "epg": "https://epg.zsdc.eu.org/t.xml",
+            },
+        ]
+    }
+
+
 def _safe_path(root: Path, repository_path: str) -> Path:
     relative = PurePosixPath(repository_path)
     if relative.is_absolute() or ".." in relative.parts:
