@@ -71,7 +71,7 @@ Phase 1 seeds both automatic playlists from the known playlists after syntax val
 
 ## US NAS generation
 
-`Guovin/iptv-api` is an external generator, not a source of channels. Its source subscriptions are limited to explicit entries tracked in this repository. Upstream code is pinned to a reviewed version or image digest; `latest` is not used unattended.
+`Guovin/iptv-api` is an external generator, not a source of channels. Its source subscriptions are limited to explicit entries tracked in this repository. Per the owner's 2026-08-16 decision, the NAS uses `guovern/iptv-api:latest`: each scheduled cycle pulls once, records the resolved image ID/digest, and runs both regional profiles with that same image. A pull or inspection failure aborts the cycle without replacing either known-good playlist.
 
 Two isolated profiles run every 12 hours:
 

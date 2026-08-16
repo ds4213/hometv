@@ -2,16 +2,19 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Run a pinned `Guovin/iptv-api` build on the US NAS every 12 hours to produce a US-tested playlist and a mainland-preserving playlist, then publish only guardrail-approved outputs to the permanent HomeTV paths.
+**Goal:** Run the current `Guovin/iptv-api` Docker image on the US NAS every 12 hours to produce a US-tested playlist and a mainland-preserving playlist, then publish only guardrail-approved outputs to the permanent HomeTV paths.
 
-**Architecture:** Build one local container image from the reviewed upstream Git commit and run it twice as isolated, one-shot profiles. The US profile performs quick playback/speed testing; the mainland profile collects and normalizes without using US playback failure as deletion evidence. A repository-owned Python orchestrator invokes both profiles, validates outputs through `hometv.live`, commits only approved generated artifacts, and uses fast-forward-only pushes.
+**Architecture:** Pull `guovern/iptv-api:latest` once at the start of each scheduled cycle, record its resolved image identity, and run that exact local image twice as isolated, one-shot profiles without a second pull. The US profile performs quick playback/speed testing; the mainland profile collects and normalizes without using US playback failure as deletion evidence. A repository-owned Python orchestrator invokes both profiles, validates outputs through `hometv.live`, commits only approved generated artifacts, and uses fast-forward-only pushes.
 
-**Tech Stack:** `Guovin/iptv-api` 3.0.0 at commit `ccf1a72d4f3b1f3311068d5ea48d09d5d888fd3f`, Docker Compose, Python 3.12 standard library, POSIX shell, Git, Synology Task Scheduler.
+**Tech Stack:** `guovern/iptv-api:latest`, Docker Compose, Python 3.12 standard library, POSIX shell, Git, Synology Task Scheduler.
 
 ## Global Constraints
 
 - Phase 1 from `2026-08-16-curated-wanger-fongmi-live.md` is merged and proven on the N1 before NAS output can replace either seeded automatic playlist.
-- Build upstream from exact commit `ccf1a72d4f3b1f3311068d5ea48d09d5d888fd3f`; do not use `latest` unattended.
+- Pull `guovern/iptv-api:latest` exactly once before each scheduled generation cycle.
+- Abort the cycle if pull or image inspection fails; never replace a playlist after an uncertain image update.
+- Run both regional profiles with `--pull never` after inspection so one cycle cannot mix two image versions.
+- Record the resolved image ID and RepoDigest in both live health reports and the dry-run output.
 - Track only explicit subscription URLs in this repository; `iptv-api` itself is not a channel source.
 - Run two isolated profiles; do not share output, cache, or configuration directories.
 - US profile prefers IPv4 and uses quick playback/speed testing.
@@ -28,7 +31,7 @@
 
 ## File Structure
 
-- Create `ops/iptv-api/compose.yaml`: pinned Git-context build and two one-shot services.
+- Create `ops/iptv-api/compose.yaml`: `latest` image and two one-shot services.
 - Create `ops/iptv-api/profiles/us/config/*`: US test profile, channel template, and explicit subscriptions.
 - Create `ops/iptv-api/profiles/cn/config/*`: mainland-preserving profile, channel template, and explicit subscriptions.
 - Create `ops/iptv-api/.gitignore`: profile output/cache exclusion.
@@ -36,9 +39,9 @@
 - Create `scripts/nas_refresh.py`: dry-run/publish CLI.
 - Create `ops/iptv-api/run.sh`: scheduler entry point.
 - Create `tests/test_nas.py`: Docker-command and Git-scope behavior with mocks.
-- Create `ops/iptv-api/README.md`: Synology deployment, dry run, scheduling, credentials, logs, rollback, and upgrade review.
+- Create `ops/iptv-api/README.md`: Synology deployment, dry run, scheduling, credentials, logs, image traceability, and rollback.
 
-### Task 1: Pinned Dual-Profile Container Definition
+### Task 1: Latest-Image Dual-Profile Container Definition
 
 **Files:**
 - Create: `ops/iptv-api/compose.yaml`
@@ -56,15 +59,13 @@
 - Produces US output at `ops/iptv-api/profiles/us/output/ipv4/result.m3u`.
 - Produces CN output at `ops/iptv-api/profiles/cn/output/ipv4/result.m3u`.
 
-- [ ] **Step 1: Create the pinned Compose definition**
+- [ ] **Step 1: Create the latest-image Compose definition**
 
 ```yaml
 name: hometv-iptv
 
 x-iptv-api: &iptv-api
-  image: hometv/iptv-api:3.0.0-ccf1a72d
-  build:
-    context: https://github.com/Guovin/iptv-api.git#ccf1a72d4f3b1f3311068d5ea48d09d5d888fd3f
+  image: guovern/iptv-api:latest
   entrypoint: ["/bin/sh", "-lc"]
   command: [". /iptv-api/.venv/bin/activate && exec python -u /iptv-api/main.py"]
   network_mode: bridge
@@ -203,7 +204,7 @@ CCTV-17,
 
 - [ ] **Step 5: Exclude runtime state**
 
-Before adding `.gitignore`, create zero-byte `alias.txt`, `blacklist.txt`, `whitelist.txt`, `local.txt`, and `epg.txt` under both `profiles/us/config` and `profiles/cn/config`. These satisfy the pinned generator's expected config layout without adding unreviewed subscriptions or filters.
+Before adding `.gitignore`, create zero-byte `alias.txt`, `blacklist.txt`, `whitelist.txt`, `local.txt`, and `epg.txt` under both `profiles/us/config` and `profiles/cn/config`. These satisfy the generator's expected config layout without adding unreviewed subscriptions or filters.
 
 ```gitignore
 profiles/*/output/
@@ -212,21 +213,21 @@ profiles/*/config/frozen.pkl
 profiles/*/config/*.db
 ```
 
-- [ ] **Step 6: Validate and build the pinned image**
+- [ ] **Step 6: Validate, pull, and inspect the current image**
 
 ```powershell
 docker compose -f ops/iptv-api/compose.yaml config
-docker compose -f ops/iptv-api/compose.yaml build
-docker image inspect hometv/iptv-api:3.0.0-ccf1a72d --format '{{json .RepoTags}}'
+docker compose -f ops/iptv-api/compose.yaml pull iptv-us
+docker image inspect guovern/iptv-api:latest --format '{{json .Id}} {{json .RepoDigests}}'
 ```
 
-Expected: Compose resolves both services; one local image is built from the exact Git fragment; the image tag is `hometv/iptv-api:3.0.0-ccf1a72d`.
+Expected: Compose resolves both services; one current image is pulled; inspection prints a non-empty image ID and at least one RepoDigest. Both services resolve to `guovern/iptv-api:latest`.
 
 - [ ] **Step 7: Commit**
 
 ```powershell
 git add ops/iptv-api/compose.yaml ops/iptv-api/.gitignore ops/iptv-api/profiles
-git commit -m "Add pinned dual IPTV generator profiles"
+git commit -m "Add latest-image IPTV generator profiles"
 ```
 
 ### Task 2: Testable NAS Orchestration
@@ -238,9 +239,10 @@ git commit -m "Add pinned dual IPTV generator profiles"
 
 **Interfaces:**
 - Produces: `NasError(RuntimeError)`.
+- Produces: `GeneratorRun(image_id: str, repo_digests: tuple[str, ...], us_path: Path, cn_path: Path)`.
 - Produces: `RunResult(profile: str, input_path: Path, accepted: bool, channel_count: int, sha256: str)`.
-- Produces: `run_generators(root: Path, runner: Callable = subprocess.run) -> tuple[Path, Path]`.
-- Produces: `publish_generated(root: Path, inputs: tuple[Path, Path]) -> list[RunResult]`.
+- Produces: `run_generators(root: Path, runner: Callable = subprocess.run) -> GeneratorRun`.
+- Produces: `publish_generated(root: Path, generated: GeneratorRun) -> list[RunResult]`.
 - Produces: `commit_generated(root: Path, runner: Callable = subprocess.run) -> bool`.
 - Produces CLI: `python scripts/nas_refresh.py --dry-run` and `python scripts/nas_refresh.py --publish`.
 
@@ -267,9 +269,12 @@ def write_output(root: Path, profile: str, raw: bytes) -> Path:
 
 def generator_runner(root: Path) -> Mock:
     def run(command, **kwargs):
-        if command[-1] == "iptv-us":
+        if command[:3] == ["docker", "image", "inspect"]:
+            output = '{"Id":"sha256:image123","RepoDigests":["guovern/iptv-api@sha256:digest123"]}'
+            return CompletedProcess(command, 0, output, "")
+        if "run" in command and command[-1] == "iptv-us":
             write_output(root, "us", make_playlist(24))
-        elif command[-1] == "iptv-cn":
+        elif "run" in command and command[-1] == "iptv-cn":
             write_output(root, "cn", make_playlist(24))
         return CompletedProcess(command, 0, "", "")
     return Mock(side_effect=run)
@@ -300,26 +305,34 @@ class NasTests(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
-    def test_runs_us_then_cn_from_pinned_compose_file(self):
+    def test_pulls_once_then_runs_both_profiles_without_another_pull(self):
         runner = generator_runner(self.root)
-        us, cn = run_generators(self.root, runner=runner)
+        generated = run_generators(self.root, runner=runner)
         commands = [call.args[0] for call in runner.call_args_list]
-        self.assertEqual(commands[0][-3:], ["run", "--rm", "iptv-us"])
-        self.assertEqual(commands[1][-3:], ["run", "--rm", "iptv-cn"])
-        self.assertTrue(str(us).endswith("profiles/us/output/ipv4/result.m3u"))
-        self.assertTrue(str(cn).endswith("profiles/cn/output/ipv4/result.m3u"))
+        self.assertEqual(commands[0][-2:], ["pull", "iptv-us"])
+        self.assertEqual(commands[1][:3], ["docker", "image", "inspect"])
+        self.assertEqual(commands[2][-5:], ["run", "--pull", "never", "--rm", "iptv-us"])
+        self.assertEqual(commands[3][-5:], ["run", "--pull", "never", "--rm", "iptv-cn"])
+        self.assertEqual(generated.image_id, "sha256:image123")
+        self.assertEqual(generated.repo_digests, ("guovern/iptv-api@sha256:digest123",))
+        self.assertTrue(str(generated.us_path).endswith("profiles/us/output/ipv4/result.m3u"))
+        self.assertTrue(str(generated.cn_path).endswith("profiles/cn/output/ipv4/result.m3u"))
 
     def test_rejected_cn_output_does_not_block_accepted_us_or_replace_cn(self):
         seed_stable_playlists(self.root)
-        inputs = (
-            write_output(self.root, "us", make_playlist(25)),
-            write_output(self.root, "cn", make_playlist(10)),
+        generated = GeneratorRun(
+            image_id="sha256:image123",
+            repo_digests=("guovern/iptv-api@sha256:digest123",),
+            us_path=write_output(self.root, "us", make_playlist(25)),
+            cn_path=write_output(self.root, "cn", make_playlist(10)),
         )
         old_cn = (self.root / "vendor/live/auto-cn.m3u").read_bytes()
-        results = publish_generated(self.root, inputs)
+        results = publish_generated(self.root, generated)
         self.assertTrue(next(item for item in results if item.profile == "us").accepted)
         self.assertFalse(next(item for item in results if item.profile == "cn").accepted)
         self.assertEqual((self.root / "vendor/live/auto-cn.m3u").read_bytes(), old_cn)
+        health = json.loads((self.root / "health/live-us.json").read_text(encoding="utf-8"))
+        self.assertEqual(health["generator_image_id"], "sha256:image123")
 
     def test_commit_stages_only_four_generated_paths_and_never_force_pushes(self):
         runner = git_runner()
@@ -339,21 +352,26 @@ Run: `python -m unittest tests.test_nas -v`
 
 Expected: FAIL because `hometv.nas` does not exist.
 
-- [ ] **Step 3: Implement generator invocation**
+- [ ] **Step 3: Implement one pull, image inspection, and generator invocation**
 
 Run these commands with `cwd=root`, `check=True`, captured text output, and no shell:
 
 ```python
 compose = ["docker", "compose", "-f", "ops/iptv-api/compose.yaml"]
-runner(compose + ["run", "--rm", "iptv-us"], cwd=root, check=True, text=True, capture_output=True)
-runner(compose + ["run", "--rm", "iptv-cn"], cwd=root, check=True, text=True, capture_output=True)
+runner(compose + ["pull", "iptv-us"], cwd=root, check=True, text=True, capture_output=True)
+inspection = runner(
+    ["docker", "image", "inspect", "guovern/iptv-api:latest", "--format", '{{json .}}'],
+    cwd=root, check=True, text=True, capture_output=True,
+)
+runner(compose + ["run", "--pull", "never", "--rm", "iptv-us"], cwd=root, check=True, text=True, capture_output=True)
+runner(compose + ["run", "--pull", "never", "--rm", "iptv-cn"], cwd=root, check=True, text=True, capture_output=True)
 ```
 
-Require both expected output files to exist, be non-empty, and have modification times after the run start. Raise `NasError` with profile name and sanitized stderr on failure.
+Parse `inspection.stdout` as a JSON object, require non-empty `Id`, and normalize `RepoDigests` to a tuple of strings. Require both expected output files to exist, be non-empty, and have modification times after the run start. Raise `NasError` with operation/profile name and sanitized stderr on pull, inspection, or run failure. A failure before both profile runs leaves both stable playlists unchanged.
 
 - [ ] **Step 4: Implement independent guarded publication**
 
-Call `publish_playlist` separately for `us` and `cn`; one rejected profile does not undo an accepted sibling. Convert `PlaylistError` into `RunResult(accepted=False, channel_count=0, sha256="")` after `publish_playlist` writes rejected health metadata. Return results in `us`, `cn` order.
+Call `publish_playlist` separately for `us` and `cn`; one rejected profile does not undo an accepted sibling. Convert `PlaylistError` into `RunResult(accepted=False, channel_count=0, sha256="")` after `publish_playlist` writes rejected health metadata. After each result, atomically add `generator_image_id` and `generator_repo_digests` to that profile's health JSON. Return results in `us`, `cn` order.
 
 - [ ] **Step 5: Implement exact Git scope and fast-forward-only behavior**
 
@@ -389,7 +407,7 @@ git commit -m "Add safe NAS playlist orchestration"
 
 **Interfaces:**
 - Produces a non-interactive Synology Task Scheduler command.
-- Documents dry-run, publish, rollback, logs, credentials, and pinned-upstream review.
+- Documents dry-run, publish, rollback, logs, credentials, and `latest` image traceability.
 
 - [ ] **Step 1: Add the scheduler shell entry point**
 
@@ -417,7 +435,7 @@ python3 scripts/nas_refresh.py --publish
 
 ```sh
 cd /volume1/docker/hometv
-docker compose -f ops/iptv-api/compose.yaml build
+docker compose -f ops/iptv-api/compose.yaml pull iptv-us
 python3 scripts/nas_refresh.py --dry-run
 python3 scripts/refresh.py verify --regions us cn --probe-origin us-nas
 ```
@@ -438,9 +456,9 @@ Document Docker permission requirements, repository ownership, log rotation, and
 
 Use an existing repository-scoped GitHub SSH deploy key or fine-grained token stored in the NAS credential helper, never in the checkout. State that `run.sh` pushes only GitHub `origin`. Gitee remains a separate fast-forward sync step until the owner explicitly approves and installs a repository-scoped Gitee deploy key.
 
-- [ ] **Step 5: Document rollback and upstream upgrades**
+- [ ] **Step 5: Document playlist and image rollback**
 
-When the most recent commit is the generated-playlist commit, rollback is `git revert HEAD` followed by a normal push; permanent URLs never change. To upgrade `iptv-api`, review upstream release notes and diff from `ccf1a72d4f3b1f3311068d5ea48d09d5d888fd3f`, update both the full Git context SHA and short image tag in one commit, rebuild, run dry-run, and review output before scheduling.
+When the most recent commit is the generated-playlist commit, playlist rollback is `git revert HEAD` followed by a normal push; permanent URLs never change. Every health file records the image ID and RepoDigest that produced its playlist. If a new `latest` image breaks generation, disable the scheduled task, inspect the last accepted health record, pull that recorded digest explicitly, tag it locally as `guovern/iptv-api:rollback`, change Compose to that tag in a reviewed emergency commit, and dry-run before re-enabling publication.
 
 - [ ] **Step 6: Validate the shell script and documentation commands**
 
@@ -474,7 +492,6 @@ git commit -m "Document NAS live automation"
 - [ ] **Step 1: Build and run without publication**
 
 ```sh
-docker compose -f ops/iptv-api/compose.yaml build --pull
 python3 scripts/nas_refresh.py --dry-run
 ```
 
@@ -482,7 +499,7 @@ Expected: both one-shot containers exit 0; both candidate outputs parse; dry-run
 
 - [ ] **Step 2: Record evidence**
 
-Record upstream commit, local image ID, NAS architecture, Docker version, start/end time, input subscription URLs, US/CN channel and URL counts, profiles' exact speed-test switches, playlist SHA-256 values, guardrail results, and ten sampled channels per profile. Explicitly state that US success does not prove mainland playback.
+Record the resolved image ID and RepoDigest, NAS architecture, Docker version, start/end time, input subscription URLs, US/CN channel and URL counts, profiles' exact speed-test switches, playlist SHA-256 values, guardrail results, and ten sampled channels per profile. Explicitly state that US success does not prove mainland playback.
 
 - [ ] **Step 3: Perform one controlled publication**
 
