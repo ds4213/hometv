@@ -155,6 +155,56 @@ class ValidateTests(unittest.TestCase):
             {finding.code for finding in validate_live_config({"lives": []}, "eu")},
         )
 
+    def test_live_validation_marks_malformed_http_url_invalid_without_raising(self):
+        config = {
+            "lives": [
+                {
+                    "name": "A",
+                    "url": "https://[bad",
+                    "boot": True,
+                    "ua": "okhttp/4.12.0",
+                    "timeout": 15,
+                }
+            ]
+        }
+        codes = {finding.code for finding in validate_live_config(config, "us")}
+        self.assertIn("invalid-live-url", codes)
+
+    def test_live_validation_ignores_malformed_recursive_url_without_raising(self):
+        config = {
+            "lives": [
+                {
+                    "name": "A",
+                    "url": "https://example.com/a.m3u",
+                    "boot": True,
+                    "ua": "okhttp/4.12.0",
+                    "timeout": 15,
+                    "epg": "https://[bad",
+                }
+            ]
+        }
+        self.assertEqual(validate_live_config(config, "us"), [])
+
+    def test_live_validation_recognizes_uppercase_http_schemes(self):
+        config = {
+            "lives": [
+                {
+                    "name": "A",
+                    "url": "HTTPS://raw.githubusercontent.com/example/a.m3u",
+                    "boot": True,
+                    "ua": "okhttp/4.12.0",
+                    "timeout": 15,
+                    "epg": "HTTP://example.com/epg.xml",
+                }
+            ]
+        }
+        codes = {
+            (finding.severity, finding.code)
+            for finding in validate_live_config(config, "cn")
+        }
+        self.assertIn(("error", "mainland-github-url"), codes)
+        self.assertIn(("warning", "cleartext-http"), codes)
+
     @patch("urllib.request.urlopen")
     def test_probe_rejects_html_error_page_with_200_status(self, urlopen):
         urlopen.return_value = FakeResponse(b"<html>blocked</html>", "text/html")

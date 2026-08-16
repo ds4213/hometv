@@ -154,12 +154,15 @@ def validate_live_config(config: dict, region: str) -> list[Finding]:
             names.add(name)
 
         url = live.get("url")
-        parsed = urllib.parse.urlsplit(url) if isinstance(url, str) else None
+        try:
+            parsed = urllib.parse.urlsplit(url) if isinstance(url, str) else None
+        except ValueError:
+            parsed = None
         valid_url = (
             isinstance(url, str)
             and bool(url)
             and parsed is not None
-            and parsed.scheme in {"http", "https"}
+            and parsed.scheme.lower() in {"http", "https"}
             and bool(parsed.netloc)
         )
         if not valid_url:
@@ -219,11 +222,15 @@ def validate_live_config(config: dict, region: str) -> list[Finding]:
         )
 
     for path, value in _strings(config):
-        if not value.startswith(("http://", "https://")):
+        if not value.lower().startswith(("http://", "https://")):
             continue
-        parsed = urllib.parse.urlsplit(value)
+        try:
+            parsed = urllib.parse.urlsplit(value)
+        except ValueError:
+            continue
+        scheme = parsed.scheme.lower()
         host = (parsed.hostname or "").lower()
-        if parsed.scheme == "http" and host not in {"127.0.0.1", "localhost"}:
+        if scheme == "http" and host not in {"127.0.0.1", "localhost"}:
             findings.append(Finding("warning", "cleartext-http", "cleartext HTTP dependency", path))
         if region == "cn" and (
             host == "github.com"
