@@ -5,8 +5,9 @@ import tempfile
 import unittest
 
 from hometv.fetch import FetchedConfig
-from hometv.refresh import RefreshError, promote_source, refresh_candidates
+from hometv.refresh import RefreshError, promote_source, refresh_candidates, verify_regions
 from hometv.registry import Source
+from hometv.validate import ProbeResult
 
 
 def write_registry(root: Path) -> None:
@@ -44,6 +45,40 @@ def fetched(source: Source, config: dict) -> FetchedConfig:
 
 
 class RefreshTests(unittest.TestCase):
+    def test_network_verification_retries_one_transient_failure(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            stable = root / "stable" / "us.json"
+            stable.parent.mkdir(parents=True)
+            stable.write_text(
+                json.dumps(
+                    {
+                        "spider": "https://example.com/spider.jar",
+                        "sites": [],
+                        "lives": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            calls = 0
+
+            def flaky_probe(url):
+                nonlocal calls
+                calls += 1
+                if calls == 1:
+                    return ProbeResult(url, False, 0, 0, 0, "", "", "timed out", "")
+                return ProbeResult(url, True, 200, 10, 2, "abc", "application/json", "", "")
+
+            statuses = verify_regions(
+                root,
+                ("us",),
+                network=True,
+                prober=flaky_probe,
+            )
+
+            self.assertEqual(calls, 2)
+            self.assertEqual(statuses["us"], "ok")
+
     def test_candidate_refresh_never_writes_stable(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

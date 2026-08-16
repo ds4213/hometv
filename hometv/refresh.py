@@ -166,6 +166,13 @@ def _probe_urls(config: dict, region: str) -> tuple[list[str], list[Finding]]:
     return urls, findings
 
 
+def _probe_with_retry(prober: Callable[[str], ProbeResult], url: str) -> ProbeResult:
+    result = prober(url)
+    if not result.ok and (result.status_code == 0 or result.status_code >= 500):
+        return prober(url)
+    return result
+
+
 def verify_regions(
     root: Path,
     regions: tuple[str, ...],
@@ -185,7 +192,7 @@ def verify_regions(
         if network:
             urls, pending = _probe_urls(config, region)
             findings.extend(pending)
-            probes = [prober(url) for url in urls]
+            probes = [_probe_with_retry(prober, url) for url in urls]
         health_path = root / "health" / f"{region}.json"
         write_health_report(region, findings, probes, health_path, probe_origin)
         report = json.loads(health_path.read_text(encoding="utf-8"))
