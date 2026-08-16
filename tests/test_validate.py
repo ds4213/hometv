@@ -3,6 +3,7 @@ from pathlib import Path
 import tempfile
 import unittest
 from unittest.mock import patch
+import urllib.error
 
 from hometv.validate import ProbeResult, probe_http, validate_config, write_health_report
 
@@ -75,6 +76,40 @@ class ValidateTests(unittest.TestCase):
         self.assertTrue(result.ok)
         self.assertEqual(result.media_target, "https://example.com/live/segment.ts")
         self.assertEqual(result.bytes, 11)
+
+    @patch("urllib.request.urlopen")
+    def test_playlist_probe_skips_dead_channels_until_one_works(self, urlopen):
+        urlopen.side_effect = [
+            FakeResponse(
+                b"#EXTM3U\n#EXTINF:-1,dead\nhttps://example.com/dead.ts\n"
+                b"#EXTINF:-1,good\nhttps://example.com/good.ts\n",
+                "application/vnd.apple.mpegurl",
+            ),
+            urllib.error.HTTPError(
+                "https://example.com/dead.ts", 404, "not found", None, None
+            ),
+            FakeResponse(b"working-media", "video/mp2t"),
+        ]
+        result = probe_http("https://example.com/live/list.m3u")
+        self.assertTrue(result.ok)
+        self.assertEqual(result.media_target, "https://example.com/good.ts")
+
+    @patch("urllib.request.urlopen")
+    def test_probe_uses_okhttp_user_agent_for_catvod_apis(self, urlopen):
+        def respond(request, timeout):
+            if request.headers.get("User-agent") == "okhttp/4.12.0":
+                return FakeResponse(b'{"class":[]}', "application/json")
+            return FakeResponse(b"<html>challenge</html>", "text/html")
+
+        urlopen.side_effect = respond
+        result = probe_http("https://vod.catvod.ggff.net/guazi")
+        self.assertTrue(result.ok)
+
+    @patch("urllib.request.urlopen")
+    def test_probe_accepts_spider_assets_up_to_four_mib(self, urlopen):
+        urlopen.return_value = FakeResponse(b"x" * (3 * 1024 * 1024), "application/octet-stream")
+        result = probe_http("https://example.com/spider.jar")
+        self.assertTrue(result.ok)
 
     def test_health_report_marks_probe_failures_and_hides_queries(self):
         probe = ProbeResult(

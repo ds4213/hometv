@@ -31,9 +31,9 @@ ASSET_PATHS = {
     YANG_SPORT: "vendor/live/yang-sport.m3u",
 }
 
-# Confirmed HTTP 404 from both endpoints on 2026-08-16. The US configuration
-# remains an upstream-preserving copy; the mainland optimized variant omits them.
-MAINLAND_OMIT_LIVE_URLS = {YANG_GATHER, YANG_SPORT}
+# Confirmed unusable on 2026-08-16: both YanG endpoints return HTTP 404 and
+# the Migu list contains only an EXTM3U header with no channels.
+OMIT_LIVE_URLS = {MIGU, YANG_GATHER, YANG_SPORT}
 
 MAINLAND_DOH = [
     {
@@ -66,7 +66,15 @@ class BuildResult:
 
 
 def build_us(config: dict) -> dict:
-    return deepcopy(config)
+    result = deepcopy(config)
+    lives = result.get("lives", [])
+    if isinstance(lives, list):
+        lives[:] = [
+            live
+            for live in lives
+            if not (isinstance(live, dict) and live.get("url") in OMIT_LIVE_URLS)
+        ]
+    return result
 
 
 def _target(gitee_base: str, repository_path: str) -> str:
@@ -100,7 +108,7 @@ def build_cn(config: dict, gitee_base: str) -> BuildResult:
         lives[:] = [
             live
             for live in lives
-            if not (isinstance(live, dict) and live.get("url") in MAINLAND_OMIT_LIVE_URLS)
+            if not (isinstance(live, dict) and live.get("url") in OMIT_LIVE_URLS)
         ]
         for live in lives:
             if isinstance(live, dict) and "url" in live:

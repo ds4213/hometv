@@ -12,8 +12,8 @@ import urllib.parse
 import urllib.request
 
 
-MAX_PROBE_BYTES = 2 * 1024 * 1024
-USER_AGENT = "HomeTV-Config-Manager/1.0"
+MAX_PROBE_BYTES = 4 * 1024 * 1024
+USER_AGENT = "okhttp/4.12.0"
 
 
 @dataclass(frozen=True)
@@ -129,7 +129,7 @@ def _request(url: str, timeout: float, byte_range: bool = False) -> tuple[int, b
         content_type = response.headers.get_content_type()
     elapsed_ms = round((time.monotonic() - started) * 1000)
     if len(raw) > MAX_PROBE_BYTES:
-        raise ValueError("response exceeds 2 MiB probe limit")
+        raise ValueError("response exceeds 4 MiB probe limit")
     return status, raw, content_type, elapsed_ms
 
 
@@ -138,16 +138,21 @@ def _html(raw: bytes, content_type: str) -> bool:
     return "html" in content_type.lower() or prefix.startswith((b"<!doctype html", b"<html"))
 
 
-def _playlist_target(raw: bytes, base_url: str) -> str:
+def _playlist_targets(raw: bytes, base_url: str, limit: int = 25) -> list[str]:
     try:
         text = raw.decode("utf-8-sig")
     except UnicodeDecodeError:
-        return ""
+        return []
+    targets: list[str] = []
     for line in text.splitlines():
         value = line.strip()
         if value and not value.startswith("#"):
-            return urllib.parse.urljoin(base_url, value)
-    return ""
+            target = urllib.parse.urljoin(base_url, value)
+            if target not in targets:
+                targets.append(target)
+            if len(targets) >= limit:
+                break
+    return targets
 
 
 def probe_http(url: str, timeout: float = 15.0) -> ProbeResult:
@@ -167,25 +172,35 @@ def probe_http(url: str, timeout: float = 15.0) -> ProbeResult:
             or raw.lstrip().startswith(b"#EXTM3U")
         )
         if is_playlist:
-            media_url = _playlist_target(raw, url)
-            if not media_url:
+            media_urls = _playlist_targets(raw, url)
+            if not media_urls:
                 raise ValueError("playlist has no playable resource")
-            media_status, media, media_type, media_ms = _request(media_url, timeout, byte_range=True)
-            if media_status < 200 or media_status >= 300:
-                raise ValueError(f"media HTTP {media_status}")
-            if not media or _html(media, media_type):
-                raise ValueError("media resource is empty or HTML")
-            return ProbeResult(
-                target=target,
-                ok=True,
-                status_code=media_status,
-                elapsed_ms=elapsed_ms + media_ms,
-                bytes=len(media),
-                sha256=hashlib.sha256(media).hexdigest(),
-                content_type=media_type,
-                error="",
-                media_target=_sanitize_url(media_url),
-            )
+            last_error = ""
+            for media_url in media_urls:
+                try:
+                    media_status, media, media_type, media_ms = _request(
+                        media_url, timeout, byte_range=True
+                    )
+                    if media_status < 200 or media_status >= 300:
+                        raise ValueError(f"media HTTP {media_status}")
+                    if not media or _html(media, media_type):
+                        raise ValueError("media resource is empty or HTML")
+                    return ProbeResult(
+                        target=target,
+                        ok=True,
+                        status_code=media_status,
+                        elapsed_ms=elapsed_ms + media_ms,
+                        bytes=len(media),
+                        sha256=hashlib.sha256(media).hexdigest(),
+                        content_type=media_type,
+                        error="",
+                        media_target=_sanitize_url(media_url),
+                    )
+                except urllib.error.HTTPError as exc:
+                    last_error = f"HTTP {exc.code}"
+                except (OSError, urllib.error.URLError, ValueError) as exc:
+                    last_error = str(exc)
+            raise ValueError(f"no playable sample in first {len(media_urls)} entries: {last_error}")
 
         return ProbeResult(
             target=target,
