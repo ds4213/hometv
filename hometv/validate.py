@@ -227,6 +227,14 @@ def validate_live_config(config: dict, region: str) -> list[Finding]:
         try:
             parsed = urllib.parse.urlsplit(value)
         except ValueError:
+            findings.append(
+                Finding(
+                    "error",
+                    "invalid-live-url",
+                    "invalid HTTP(S) URL",
+                    path,
+                )
+            )
             continue
         scheme = parsed.scheme.lower()
         host = (parsed.hostname or "").lower()

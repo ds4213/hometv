@@ -170,7 +170,7 @@ class ValidateTests(unittest.TestCase):
         codes = {finding.code for finding in validate_live_config(config, "us")}
         self.assertIn("invalid-live-url", codes)
 
-    def test_live_validation_ignores_malformed_recursive_url_without_raising(self):
+    def test_live_validation_reports_malformed_recursive_url_without_raising(self):
         config = {
             "lives": [
                 {
@@ -179,11 +179,15 @@ class ValidateTests(unittest.TestCase):
                     "boot": True,
                     "ua": "okhttp/4.12.0",
                     "timeout": 15,
-                    "epg": "https://[bad",
+                    "epg": "HTTPS://[bad",
                 }
             ]
         }
-        self.assertEqual(validate_live_config(config, "us"), [])
+        findings = validate_live_config(config, "us")
+        self.assertIn(
+            ("error", "invalid-live-url", "$.lives[0].epg"),
+            {(item.severity, item.code, item.path) for item in findings},
+        )
 
     def test_live_validation_recognizes_uppercase_http_schemes(self):
         config = {
