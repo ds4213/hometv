@@ -69,6 +69,18 @@ def _split_http_url(url: str) -> object:
         raise PlaylistError("invalid media URL") from error
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
         raise PlaylistError("media URL must use HTTP(S)")
+    authority = parsed.netloc.rsplit("@", 1)[-1]
+    if authority.startswith("["):
+        closing_bracket = authority.find("]")
+        suffix = authority[closing_bracket + 1 :]
+        if closing_bracket < 0 or (
+            suffix and (not suffix.startswith(":") or not suffix[1:].isdigit())
+        ):
+            raise PlaylistError("invalid media URL authority")
+        if suffix == ":":
+            raise PlaylistError("invalid media URL authority")
+    elif authority.endswith(":"):
+        raise PlaylistError("invalid media URL authority")
     return parsed
 
 

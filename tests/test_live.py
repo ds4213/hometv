@@ -169,6 +169,26 @@ class LiveTests(unittest.TestCase):
             publish_playlist(bad_port, destination, "us", self.root / "health.json")
         self.assertEqual(json.loads((self.root / "health.json").read_text(encoding="utf-8"))["status"], "rejected")
 
+    def test_authority_malformed_current_is_rejected_and_previous_is_ignored(self):
+        destination = self.root / "auto-us.m3u"
+        health = self.root / "health.json"
+        known_good = make_playlist(40, False, False)
+        for authority in [b"media.example:", b"[2001:4860:4860::8888]junk"]:
+            with self.subTest(authority=authority):
+                malformed = make_playlist(20, False, False).replace(b"media.example", authority, 1)
+                with self.assertRaises(PlaylistError):
+                    validate_playlist(malformed, "us")
+                destination.write_bytes(known_good)
+                with self.assertRaises(PlaylistError):
+                    publish_playlist(malformed, destination, "us", health)
+                self.assertEqual(destination.read_bytes(), known_good)
+                self.assertEqual(json.loads(health.read_text(encoding="utf-8"))["status"], "rejected")
+
+                previous = make_playlist(40, False, False).replace(b"media.example", authority, 1)
+                destination.write_bytes(previous)
+                report = publish_playlist(make_playlist(20, False, False), destination, "us", health)
+                self.assertEqual(report.channel_count, 20)
+
     def test_cn_requires_cctv_and_satellite_and_publish_is_atomic(self):
         many = make_playlist(40, include_cctv=True, include_satellite=True)
         destination = self.root / "auto-cn.m3u"
