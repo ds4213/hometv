@@ -1,0 +1,151 @@
+{
+  "spider": "https://gitee.com/ds4213tv/hometv/raw/main/vendor/nitan/awdm.png",
+  "wallpaper": "",
+  "danmaku": "http://127.0.0.1:2525/danmu?name={name}&epid={episode}",
+  "sites": [
+    {
+      "name": "🔥豆瓣推荐",
+      "key": "Douban",
+      "type": 3,
+      "api": "csp_DoubanAmns",
+      "indexs": 1,
+      "searchable": 0,
+      "filterable": 0,
+      "quickSearch": 0,
+      "changeable": 0,
+      "ext": "https://gitee.com/ds4213tv/hometv/raw/main/vendor/nitan/db.aowu"
+    },
+    {
+      "name": "⚙️配置|中心",
+      "key": "MyConfig",
+      "type": 3,
+      "api": "csp_AAConfigAmns",
+      "searchable": 0,
+      "filterable": 0,
+      "quickSearch": 0,
+      "changeable": 0
+    },
+    {
+      "key": "月佬瓜子影视",
+      "name": "月佬瓜子影视",
+      "type": 4,
+      "api": "https://vod.catvod.ggff.net/guazi"
+    },
+    {
+      "key": "Qile优视频",
+      "name": "Qile优视频",
+      "type": 4,
+      "api": "https://vod.catvod.ggff.net/uvod"
+    },
+    {
+      "key": "嗷呜爱瓜TV",
+      "name": "嗷呜爱瓜TV",
+      "type": 4,
+      "api": "https://vod.catvod.ggff.net/aigua"
+    },
+    {
+      "key": "独播库",
+      "name": "独播库",
+      "type": 4,
+      "api": "https://vod.catvod.ggff.net/duboku"
+    },
+    {
+      "key": "欧乐影院",
+      "name": "欧乐影院",
+      "type": 4,
+      "api": "https://vod.catvod.ggff.net/oule"
+    },
+    {
+      "key": "荐片",
+      "name": "荐片",
+      "type": 4,
+      "api": "https://vod.catvod.ggff.net/jianpian"
+    },
+    {
+      "key": "嗷呜金牌影院",
+      "name": "嗷呜金牌影院",
+      "type": 3,
+      "api": "https://gitee.com/ds4213tv/hometv/raw/main/vendor/nitan/py/py_jinpai.py"
+    },
+    {
+      "name": "嗷呜爱壹帆",
+      "key": "嗷呜爱壹帆",
+      "type": 3,
+      "api": "csp_AiyfAmns",
+      "searchable": 1,
+      "filterable": 1,
+      "quickSearch": 1,
+      "changeable": 1
+    },
+    {
+      "key": "泥潭看球①",
+      "name": "泥潭看球①",
+      "type": 4,
+      "api": "https://vod.catvod.ggff.net/sport",
+      "timeout": 10,
+      "searchable": 0,
+      "changeable": 0,
+      "style": {
+        "type": "list"
+      }
+    },
+    {
+      "key": "泥潭看球②",
+      "name": "泥潭看球②",
+      "type": 4,
+      "api": "https://vod.catvod.ggff.net/kq",
+      "timeout": 10,
+      "searchable": 0,
+      "changeable": 0,
+      "style": {
+        "type": "list"
+      }
+    },
+    {
+      "key": "Qile看球",
+      "name": "Qile看球",
+      "type": 4,
+      "api": "https://vod.catvod.ggff.net/kanqiu",
+      "timeout": 10,
+      "searchable": 0,
+      "changeable": 0,
+      "style": {
+        "type": "list"
+      }
+    },
+    {
+      "key": "4K追剧",
+      "name": "4K追剧",
+      "type": 4,
+      "api": "https://vod.catvod.ggff.net/tg"
+    }
+  ],
+  "lives": [
+    {
+      "name": "世界杯",
+      "url": "http://82.156.243.185:33389/fwc.m3u"
+    },
+    {
+      "name": "Kimentanm电视直播",
+      "url": "https://gitee.com/ds4213tv/hometv/raw/main/vendor/live/kimentanm.m3u"
+    }
+  ],
+  "doh": [
+    {
+      "name": "AliDNS",
+      "url": "https://dns.alidns.com/dns-query",
+      "ips": [
+        "223.5.5.5",
+        "223.6.6.6"
+      ]
+    },
+    {
+      "name": "DNSPod",
+      "url": "https://doh.pub/dns-query",
+      "ips": [
+        "1.12.12.12",
+        "120.53.53.53"
+      ]
+    }
+  ]
+}

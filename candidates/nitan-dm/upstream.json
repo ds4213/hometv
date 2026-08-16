@@ -1,0 +1,189 @@
+{
+  "spider": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/awdm.png",
+  "wallpaper": "https://深色壁纸.xxooo.cf/",
+  "danmaku": "http://127.0.0.1:2525/danmu?name={name}&epid={episode}",
+  "sites": [
+    {
+      "name": "🔥豆瓣推荐",
+      "key": "Douban",
+      "type": 3,
+      "api": "csp_DoubanAmns",
+      "indexs": 1,
+      "searchable": 0,
+      "filterable": 0,
+      "quickSearch": 0,
+      "changeable": 0,
+      "ext": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/db.aowu"
+    },
+    {
+      "name": "⚙️配置|中心",
+      "key": "MyConfig",
+      "type": 3,
+      "api": "csp_AAConfigAmns",
+      "searchable": 0,
+      "filterable": 0,
+      "quickSearch": 0,
+      "changeable": 0
+    },
+    {
+      "key": "月佬瓜子影视",
+      "name": "月佬瓜子影视",
+      "type": 4,
+      "api": "https://vod.catvod.ggff.net/guazi"
+    },
+    {
+      "key": "Qile优视频",
+      "name": "Qile优视频",
+      "type": 4,
+      "api": "https://vod.catvod.ggff.net/uvod"
+    },
+    {
+      "key": "嗷呜爱瓜TV",
+      "name": "嗷呜爱瓜TV",
+      "type": 4,
+      "api": "https://vod.catvod.ggff.net/aigua"
+    },
+    {
+      "key": "独播库",
+      "name": "独播库",
+      "type": 4,
+      "api": "https://vod.catvod.ggff.net/duboku"
+    },
+    {
+      "key": "欧乐影院",
+      "name": "欧乐影院",
+      "type": 4,
+      "api": "https://vod.catvod.ggff.net/oule"
+    },
+    {
+      "key": "荐片",
+      "name": "荐片",
+      "type": 4,
+      "api": "https://vod.catvod.ggff.net/jianpian"
+    },
+    {
+      "key": "嗷呜金牌影院",
+      "name": "嗷呜金牌影院",
+      "type": 3,
+      "api": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/py/py_jinpai.py"
+    },
+    {
+      "name": "嗷呜爱壹帆",
+      "key": "嗷呜爱壹帆",
+      "type": 3,
+      "api": "csp_AiyfAmns",
+      "searchable": 1,
+      "filterable": 1,
+      "quickSearch": 1,
+      "changeable": 1
+    },
+    {
+      "key": "泥潭看球①",
+      "name": "泥潭看球①",
+      "type": 4,
+      "api": "https://vod.catvod.ggff.net/sport",
+      "timeout": 10,
+      "searchable": 0,
+      "changeable": 0,
+      "style": {
+        "type": "list"
+      }
+    },
+    {
+      "key": "泥潭看球②",
+      "name": "泥潭看球②",
+      "type": 4,
+      "api": "https://vod.catvod.ggff.net/kq",
+      "timeout": 10,
+      "searchable": 0,
+      "changeable": 0,
+      "style": {
+        "type": "list"
+      }
+    },
+    {
+      "key": "Qile看球",
+      "name": "Qile看球",
+      "type": 4,
+      "api": "https://vod.catvod.ggff.net/kanqiu",
+      "timeout": 10,
+      "searchable": 0,
+      "changeable": 0,
+      "style": {
+        "type": "list"
+      }
+    },
+    {
+      "key": "4K追剧",
+      "name": "4K追剧",
+      "type": 4,
+      "api": "https://vod.catvod.ggff.net/tg"
+    }
+  ],
+  "lives": [
+    {
+      "name": "世界杯",
+      "url": "http://82.156.243.185:33389/fwc.m3u"
+    },
+    {
+      "name": "Kimentanm电视直播",
+      "url": "https://raw.githubusercontent.com/Kimentanm/aptv/refs/heads/master/m3u/iptv.m3u"
+    },
+    {
+      "name": "咪咕电视直播",
+      "url": "https://raw.githubusercontent.com/develop202/migu_video/refs/heads/main/interface.txt"
+    },
+    {
+      "name": "YanG电视直播",
+      "url": "https://iptv.yang-1989.eu.org/m3u/Gather.m3u"
+    },
+    {
+      "name": "YanG体育直播",
+      "url": "https://iptv.yang-1989.eu.org/m3u/Sport.m3u"
+    }
+  ],
+  "doh": [
+    {
+      "name": "Google",
+      "url": "https://dns.google/dns-query",
+      "ips": [
+        "8.8.4.4",
+        "8.8.8.8"
+      ]
+    },
+    {
+      "name": "Cloudflare",
+      "url": "https://cloudflare-dns.com/dns-query",
+      "ips": [
+        "1.1.1.1",
+        "1.0.0.1",
+        "2606:4700:4700::1111",
+        "2606:4700:4700::1001"
+      ]
+    },
+    {
+      "name": "AdGuard",
+      "url": "https://dns.adguard.com/dns-query",
+      "ips": [
+        "94.140.14.140",
+        "94.140.14.141"
+      ]
+    },
+    {
+      "name": "DNSWatch",
+      "url": "https://resolver2.dns.watch/dns-query",
+      "ips": [
+        "84.200.69.80",
+        "84.200.70.40"
+      ]
+    },
+    {
+      "name": "Quad9",
+      "url": "https://dns.quad9.net/dns-quer",
+      "ips": [
+        "9.9.9.9",
+        "149.112.112.112"
+      ]
+    }
+  ]
+}

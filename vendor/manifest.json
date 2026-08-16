@@ -1,0 +1,29 @@
+{
+  "generated_at": "2026-08-16T20:33:19.255709+00:00",
+  "files": [
+    {
+      "source_url": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/awdm.png",
+      "path": "vendor/nitan/awdm.png",
+      "bytes": 2342680,
+      "sha256": "c6dade7d08405128d8708df27d8cc4796907f35dd4c33626a220f0d8f8e45fc5"
+    },
+    {
+      "source_url": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/db.aowu",
+      "path": "vendor/nitan/db.aowu",
+      "bytes": 1426,
+      "sha256": "8b676cc2f2a9c1faa4513cedb38ca42a07da094a0abd2a773f896587e52f5a23"
+    },
+    {
+      "source_url": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/py/py_jinpai.py",
+      "path": "vendor/nitan/py/py_jinpai.py",
+      "bytes": 7397,
+      "sha256": "8af2a3509a5252a3b7dc275ecd532a910e529633413a858a4c9119f0bb79e115"
+    },
+    {
+      "source_url": "https://raw.githubusercontent.com/Kimentanm/aptv/refs/heads/master/m3u/iptv.m3u",
+      "path": "vendor/live/kimentanm.m3u",
+      "bytes": 21944,
+      "sha256": "6bca02295ddf751419889a72f87dfd0fe6f981e3b447a6bcb7e6f476446e93da"
+    }
+  ]
+}
