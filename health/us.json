@@ -1,0 +1,181 @@
+{
+  "generated_at": "2026-08-16T20:42:21.002897+00:00",
+  "region": "us",
+  "probe_origin": "local-us-network",
+  "status": "warning",
+  "findings": [
+    {
+      "severity": "warning",
+      "code": "cleartext-http",
+      "message": "cleartext HTTP dependency",
+      "path": "$.lives[0].url"
+    }
+  ],
+  "probes": [
+    {
+      "target": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/awdm.png",
+      "ok": true,
+      "status_code": 200,
+      "elapsed_ms": 156,
+      "bytes": 2342680,
+      "sha256": "c6dade7d08405128d8708df27d8cc4796907f35dd4c33626a220f0d8f8e45fc5",
+      "content_type": "image/png",
+      "error": "",
+      "media_target": ""
+    },
+    {
+      "target": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/db.aowu",
+      "ok": true,
+      "status_code": 200,
+      "elapsed_ms": 78,
+      "bytes": 1426,
+      "sha256": "8b676cc2f2a9c1faa4513cedb38ca42a07da094a0abd2a773f896587e52f5a23",
+      "content_type": "application/octet-stream",
+      "error": "",
+      "media_target": ""
+    },
+    {
+      "target": "https://vod.catvod.ggff.net/guazi",
+      "ok": true,
+      "status_code": 200,
+      "elapsed_ms": 141,
+      "bytes": 17152,
+      "sha256": "ed3ead91b84204119fe29f2aedce60365506791813431dd5c947ab357c8e273c",
+      "content_type": "application/json",
+      "error": "",
+      "media_target": ""
+    },
+    {
+      "target": "https://vod.catvod.ggff.net/uvod",
+      "ok": true,
+      "status_code": 200,
+      "elapsed_ms": 1094,
+      "bytes": 32861,
+      "sha256": "c1704edb487800de8e47106cf6bafffcd72d979c9c19b44a1bf18dd5a0750890",
+      "content_type": "application/json",
+      "error": "",
+      "media_target": ""
+    },
+    {
+      "target": "https://vod.catvod.ggff.net/aigua",
+      "ok": true,
+      "status_code": 200,
+      "elapsed_ms": 422,
+      "bytes": 27623,
+      "sha256": "c82d6822bed00bb8085c6736c8bd9d120da31d94eb6ab57f1de2f63b2ea7eadb",
+      "content_type": "application/json",
+      "error": "",
+      "media_target": ""
+    },
+    {
+      "target": "https://vod.catvod.ggff.net/duboku",
+      "ok": true,
+      "status_code": 200,
+      "elapsed_ms": 125,
+      "bytes": 8741,
+      "sha256": "e3bc7bccf7cc92bcded555e691e070c51e3b506d3c69611e2e76660dc58c60b1",
+      "content_type": "application/json",
+      "error": "",
+      "media_target": ""
+    },
+    {
+      "target": "https://vod.catvod.ggff.net/oule",
+      "ok": true,
+      "status_code": 200,
+      "elapsed_ms": 1312,
+      "bytes": 17798,
+      "sha256": "b82a99d262e27721127fff9f4ea5760f95504d7a5dd0210a2bad0242284bbc93",
+      "content_type": "application/json",
+      "error": "",
+      "media_target": ""
+    },
+    {
+      "target": "https://vod.catvod.ggff.net/jianpian",
+      "ok": true,
+      "status_code": 200,
+      "elapsed_ms": 1203,
+      "bytes": 12076,
+      "sha256": "1c1ed4c87d4fea1420d24a3336754e72c48e9945b68977aeaf4652b6385d645f",
+      "content_type": "application/json",
+      "error": "",
+      "media_target": ""
+    },
+    {
+      "target": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/py/py_jinpai.py",
+      "ok": true,
+      "status_code": 200,
+      "elapsed_ms": 110,
+      "bytes": 7397,
+      "sha256": "8af2a3509a5252a3b7dc275ecd532a910e529633413a858a4c9119f0bb79e115",
+      "content_type": "text/plain",
+      "error": "",
+      "media_target": ""
+    },
+    {
+      "target": "https://vod.catvod.ggff.net/sport",
+      "ok": true,
+      "status_code": 200,
+      "elapsed_ms": 109,
+      "bytes": 314,
+      "sha256": "a9fd627b01aebbb81b7cb1e0bf7a2d2f89f994dd995d2b66cacdff4ab0adcce6",
+      "content_type": "application/json",
+      "error": "",
+      "media_target": ""
+    },
+    {
+      "target": "https://vod.catvod.ggff.net/kq",
+      "ok": true,
+      "status_code": 200,
+      "elapsed_ms": 125,
+      "bytes": 1421,
+      "sha256": "7aef30b2cf731ecf11cf58473c840a8f3d4c3de6450f85e409e106b1be1d98a3",
+      "content_type": "application/json",
+      "error": "",
+      "media_target": ""
+    },
+    {
+      "target": "https://vod.catvod.ggff.net/kanqiu",
+      "ok": true,
+      "status_code": 200,
+      "elapsed_ms": 125,
+      "bytes": 2736,
+      "sha256": "b83bc07cbadd900dadcf885523d2a35f5a9616fbfbf646f8219c5301b443e9a3",
+      "content_type": "application/json",
+      "error": "",
+      "media_target": ""
+    },
+    {
+      "target": "https://vod.catvod.ggff.net/tg",
+      "ok": true,
+      "status_code": 200,
+      "elapsed_ms": 125,
+      "bytes": 32,
+      "sha256": "ad841869927d9bde0cf7f18f401e8940dade04681aee23733b64c489a52e4f3c",
+      "content_type": "application/json",
+      "error": "",
+      "media_target": ""
+    },
+    {
+      "target": "http://82.156.243.185:33389/fwc.m3u",
+      "ok": true,
+      "status_code": 206,
+      "elapsed_ms": 500,
+      "bytes": 368,
+      "sha256": "fd9e3d31a349d38cb3d74b88cb2c4c3be330654edc5431d0602ef9e3372453d7",
+      "content_type": "application/vnd.apple.mpegurl",
+      "error": "",
+      "media_target": "https://cdn.jsdelivr.net/gh/jkwu5472/first/media.m3u8"
+    },
+    {
+      "target": "https://raw.githubusercontent.com/Kimentanm/aptv/refs/heads/master/m3u/iptv.m3u",
+      "ok": true,
+      "status_code": 206,
+      "elapsed_ms": 531,
+      "bytes": 294,
+      "sha256": "9de973a64b4198aa016219f4428cb35b6c08f037edd2b511f8e1b253738a4171",
+      "content_type": "application/vnd.apple.mpegurl",
+      "error": "",
+      "media_target": "https://english-livebkali.cgtn.com/live/encgtn_0.m3u8"
+    }
+  ]
+}
