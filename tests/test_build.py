@@ -109,10 +109,13 @@ class BuildTests(unittest.TestCase):
                 "vendor/nitan/py/py_jinpai.py",
                 "vendor/live/kimentanm.m3u",
                 "vendor/live/migu.txt",
-                "vendor/live/yang-gather.m3u",
-                "vendor/live/yang-sport.m3u",
             },
         )
+
+    def test_cn_build_omits_confirmed_dead_live_lists(self):
+        result = build_cn(fixture(), GITEE_BASE)
+        names = [live["name"] for live in result.config["lives"]]
+        self.assertEqual(names, ["Kimentanm", "Migu"])
 
     @patch("urllib.request.urlopen")
     def test_mirror_files_writes_assets_and_manifest(self, urlopen):
