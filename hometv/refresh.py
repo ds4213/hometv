@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import tempfile
 import urllib.error
+import urllib.parse
 
 from hometv.build import (
     BuildError,
@@ -184,12 +185,26 @@ def _replace_staged_outputs(root: Path, stage: Path) -> None:
 def _event_playlist(event_fetcher: Callable[[str], bytes]) -> bytes | None:
     try:
         return event_fetcher(EVENT_PLAYLIST_URL)
-    except (OSError, urllib.error.URLError, urllib.error.HTTPError):
+    except urllib.error.HTTPError:
         return None
-    except PlaylistError as exc:
-        if str(exc) == "live playlist request failed":
+    except urllib.error.URLError as exc:
+        if _is_expected_network_error(exc):
             return None
         raise
+    except (ConnectionError, TimeoutError):
+        return None
+    except PlaylistError as exc:
+        if _is_expected_network_error(exc.__cause__):
+            return None
+        raise
+
+
+def _is_expected_network_error(error: BaseException | None) -> bool:
+    if isinstance(error, urllib.error.HTTPError):
+        return True
+    if isinstance(error, urllib.error.URLError):
+        return not isinstance(error.reason, (PermissionError, FileNotFoundError))
+    return isinstance(error, (ConnectionError, TimeoutError))
 
 
 def _http_playlist_entries(raw: bytes) -> bytes:
@@ -267,8 +282,10 @@ def compose_stable(
     playlists: dict[str, bytes] = {}
     for region in ("us", "cn"):
         raw = merge_playlists([seed] + ([event] if event is not None else []))
+        destination = root / "vendor" / "live" / f"auto-{region}.m3u"
+        previous = destination.read_bytes() if destination.exists() else None
         try:
-            validate_playlist(raw, region)
+            validate_playlist(raw, region, previous=previous)
         except PlaylistError as exc:
             raise RefreshError(f"{region} automatic playlist validation failed: {exc}") from exc
         playlists[region] = raw
@@ -345,36 +362,74 @@ def promote_source(
     return list(built)
 
 
-def _probe_urls(config: dict, region: str) -> tuple[list[str], list[Finding]]:
-    urls: list[str] = []
-    findings: list[Finding] = []
+def _without_checksum(value: str) -> str:
+    marker = value.lower().find(";md5;")
+    return value[:marker] if marker >= 0 else value
 
-    def add(value: object):
-        if not isinstance(value, str) or not value.startswith(("http://", "https://")):
-            return
-        if value.startswith("http://127.0.0.1"):
-            return
-        if region == "cn" and value.startswith(GITEE_RAW_BASE):
-            findings.append(
-                Finding(
-                    "info",
-                    "gitee-sync-pending",
-                    "repository-owned Gitee URL requires the separately authorized Gitee sync",
-                )
+
+def _normalized_http_url(value: object) -> str | None:
+    if not isinstance(value, str):
+        return None
+    candidate = value.strip()
+    if not candidate.lower().startswith(("http://", "https://")):
+        return None
+    try:
+        parsed = urllib.parse.urlsplit(candidate)
+    except ValueError:
+        return None
+    if parsed.scheme.lower() not in {"http", "https"} or not parsed.netloc:
+        return None
+    return urllib.parse.urlunsplit(
+        (parsed.scheme.lower(), parsed.netloc.lower(), parsed.path, parsed.query, "")
+    )
+
+
+def _nested_url_values(value: object, path: str, epg: bool = False) -> list[tuple[str, str]]:
+    if isinstance(value, str):
+        values = value.split(",") if epg else [value]
+        return [
+            (item.strip(), f"{path}[{index}]") if epg else (item.strip(), path)
+            for index, item in enumerate(values)
+            if item.strip()
+        ]
+    if isinstance(value, list):
+        return [
+            candidate
+            for index, item in enumerate(value)
+            for candidate in _nested_url_values(item, f"{path}[{index}]")
+        ]
+    if isinstance(value, dict):
+        return [
+            candidate
+            for key, item in value.items()
+            for candidate in _nested_url_values(
+                item, f"{path}.{key}", epg=str(key).casefold() == "epg"
             )
-            return
-        if value not in urls:
-            urls.append(value)
+        ]
+    return []
 
-    add(config.get("spider"))
-    for site in config.get("sites", []):
-        if isinstance(site, dict):
-            add(site.get("api"))
-            add(site.get("ext"))
-    for live in config.get("lives", []):
-        if isinstance(live, dict):
-            add(live.get("url"))
-    return urls, findings
+
+def _probe_url_values(config: dict) -> list[tuple[str, str]]:
+    if not isinstance(config, dict):
+        return []
+    values: list[tuple[str, str]] = []
+
+    def add(value: object, path: str, checksum: bool = False) -> None:
+        if isinstance(value, str):
+            values.append((_without_checksum(value) if checksum else value, path))
+
+    add(config.get("spider"), "$.spider", checksum=True)
+    add(config.get("wallpaper"), "$.wallpaper")
+    for index, site in enumerate(config.get("sites", [])):
+        if not isinstance(site, dict):
+            continue
+        path = f"$.sites[{index}]"
+        add(site.get("api"), f"{path}.api")
+        add(site.get("jar"), f"{path}.jar", checksum=True)
+        values.extend(_nested_url_values(site.get("ext"), f"{path}.ext"))
+    values.extend(_nested_url_values(config.get("doh"), "$.doh"))
+    values.extend(_nested_url_values(config.get("lives"), "$.lives"))
+    return values
 
 
 def _probe_with_retry(prober: Callable[[str], ProbeResult], url: str) -> ProbeResult:
@@ -407,12 +462,27 @@ def verify_regions(
         probes: list[ProbeResult] = []
         if network:
             urls: list[str] = []
+            seen: set[str] = set()
             for config in (vod, live):
-                config_urls, pending = _probe_urls(config, region)
-                findings.extend(pending)
-                for url in config_urls:
-                    if url not in urls:
-                        urls.append(url)
+                for value, path in _probe_url_values(config):
+                    url = _normalized_http_url(value)
+                    if url is None or url in seen:
+                        continue
+                    seen.add(url)
+                    host = urllib.parse.urlsplit(url).hostname
+                    if host == "127.0.0.1":
+                        continue
+                    if region == "cn" and url.startswith(GITEE_RAW_BASE):
+                        findings.append(
+                            Finding(
+                                "info",
+                                "gitee-sync-pending",
+                                "repository-owned Gitee URL requires the separately authorized Gitee sync",
+                                path,
+                            )
+                        )
+                        continue
+                    urls.append(url)
             probes = [_probe_with_retry(prober, url) for url in urls]
         health_path = root / "health" / f"{region}.json"
         write_health_report(region, findings, probes, health_path, probe_origin)

@@ -4,6 +4,7 @@ import hashlib
 import importlib.util
 import io
 import json
+import os
 from pathlib import Path
 import shutil
 import tempfile
@@ -90,6 +91,24 @@ def load_refresh_script():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def make_live_playlist(channel_count: int) -> bytes:
+    lines = ["#EXTM3U"]
+    for index in range(channel_count):
+        if index == 0:
+            name, group = "CCTV1", "央视"
+        elif index == 1:
+            name, group = "北京卫视", "卫视"
+        else:
+            name, group = f"频道{index}", "其他"
+        lines.extend(
+            (
+                f'#EXTINF:-1 group-title="{group}",{name}',
+                f"https://media.example/{index}.m3u8",
+            )
+        )
+    return ("\n".join(lines) + "\n").encode()
 
 
 def write_registry(root: Path) -> None:
@@ -191,6 +210,107 @@ class RefreshTests(unittest.TestCase):
                 )
             self.assertEqual(generated_snapshot(root), originals)
 
+    def test_compose_rejects_more_than_35_percent_auto_playlist_drop_without_replacing_any_output(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            prepare_compose_root(root)
+            seed_known_good_generated(root)
+            for region in ("us", "cn"):
+                (root / f"vendor/live/auto-{region}.m3u").write_bytes(make_live_playlist(200))
+            originals = generated_snapshot(root)
+
+            with self.assertRaisesRegex(RefreshError, "channel drop exceeds 35%"):
+                refresh.compose_stable(
+                    root,
+                    mirror_func=Mock(),
+                    event_fetcher=lambda _url: (_ for _ in ()).throw(
+                        urllib.error.URLError("offline")
+                    ),
+                )
+
+            self.assertEqual(generated_snapshot(root), originals)
+
+    def test_compose_falls_back_when_fetcher_wraps_http_error_in_playlist_error(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            prepare_compose_root(root)
+            wrapped = PlaylistError("live playlist returned HTTP 503")
+            wrapped.__cause__ = urllib.error.HTTPError(
+                "http://event.example/list.m3u", 503, "unavailable", None, None
+            )
+
+            refresh.compose_stable(
+                root,
+                mirror_func=Mock(),
+                event_fetcher=lambda _url: (_ for _ in ()).throw(wrapped),
+            )
+
+            self.assertTrue((root / "vendor/live/auto-us.m3u").exists())
+
+    def test_compose_does_not_swallow_non_network_file_or_permission_failures(self):
+        for error in (OSError("local failure"), PermissionError("denied"), FileNotFoundError("missing")):
+            with self.subTest(error=type(error).__name__), tempfile.TemporaryDirectory() as temp_dir:
+                root = Path(temp_dir)
+                prepare_compose_root(root)
+                originals = seed_known_good_generated(root)
+
+                with self.assertRaises(type(error)):
+                    refresh.compose_stable(
+                        root,
+                        mirror_func=Mock(),
+                        event_fetcher=lambda _url, captured=error: (_ for _ in ()).throw(captured),
+                    )
+
+                self.assertEqual(generated_snapshot(root), originals)
+
+    def test_compose_rolls_back_all_six_outputs_when_each_later_replace_fails(self):
+        for failure_at in range(2, 7):
+            with self.subTest(failure_at=failure_at), tempfile.TemporaryDirectory() as temp_dir:
+                root = Path(temp_dir)
+                prepare_compose_root(root)
+                originals = seed_known_good_generated(root)
+                real_replace = os.replace
+                primary_replacements = 0
+
+                def fail_one_later_replace(source, destination):
+                    nonlocal primary_replacements
+                    source_path = Path(source)
+                    if "rollback" not in source_path.parts:
+                        primary_replacements += 1
+                        if primary_replacements == failure_at:
+                            raise OSError(f"replace {failure_at} failed")
+                    return real_replace(source, destination)
+
+                with patch("hometv.refresh.os.replace", side_effect=fail_one_later_replace):
+                    with self.assertRaisesRegex(RefreshError, f"replace {failure_at} failed"):
+                        refresh.compose_stable(
+                            root,
+                            mirror_func=Mock(),
+                            event_fetcher=lambda _url: (_ for _ in ()).throw(
+                                urllib.error.URLError("offline")
+                            ),
+                        )
+
+                self.assertEqual(generated_snapshot(root), originals)
+
+    def test_compose_keeps_existing_outputs_when_staged_json_cannot_be_reparsed(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            prepare_compose_root(root)
+            originals = seed_known_good_generated(root)
+
+            with patch("hometv.refresh._serialize", return_value="{"):
+                with self.assertRaisesRegex(RefreshError, "unable to re-read staged stable/us.json"):
+                    refresh.compose_stable(
+                        root,
+                        mirror_func=Mock(),
+                        event_fetcher=lambda _url: (_ for _ in ()).throw(
+                            urllib.error.URLError("offline")
+                        ),
+                    )
+
+            self.assertEqual(generated_snapshot(root), originals)
+
     def test_candidate_refresh_rejects_invalid_wanger_before_writing_candidate_or_generated_files(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -274,6 +394,114 @@ class RefreshTests(unittest.TestCase):
             self.assertIn("https://live.example/auto.m3u", seen)
             self.assertIn("http://event.example/list.m3u", seen)
             self.assertIn("cleartext-http", {item["code"] for item in health["findings"]})
+
+    def test_verify_collects_schema_urls_once_across_vod_and_live_documents(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            stable = root / "stable"
+            stable.mkdir(parents=True)
+            shared = "https://shared.example/spider.jar"
+            (stable / "us.json").write_text(
+                json.dumps(
+                    {
+                        "spider": f"{shared};md5;0123456789abcdef0123456789abcdef",
+                        "sites": [
+                            {
+                                "api": "https://api.example/vod",
+                                "jar": f"{shared};md5;0123456789abcdef0123456789abcdef",
+                                "ext": {
+                                    "plain": "not a URL",
+                                    "nested": ["https://ext.example/one", {"url": "https://ext.example/two"}],
+                                },
+                            },
+                            {
+                                "jar": f"{shared};md5;0123456789abcdef0123456789abcdef",
+                            },
+                        ],
+                        "doh": [{"url": "https://dns.example/dns-query"}],
+                        "wallpaper": "https://wall.example/wallpaper.jpg",
+                        "lives": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (stable / "live-us.json").write_text(
+                json.dumps(
+                    {
+                        "lives": [
+                            {
+                                "name": "Auto",
+                                "url": shared,
+                                "boot": True,
+                                "ua": "okhttp/4.12.0",
+                                "timeout": 15,
+                                "epg": "https://epg.example/one.xml,https://epg.example/two.xml",
+                                "nested": {"url": "https://live-nested.example/list.m3u"},
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            seen: list[str] = []
+
+            def prober(url: str) -> ProbeResult:
+                seen.append(url)
+                return ProbeResult(url, True, 200, 1, 1, "sha", "text/plain", "", "")
+
+            statuses = verify_regions(root, ("us",), network=True, prober=prober)
+
+            self.assertEqual(statuses["us"], "ok")
+            self.assertEqual(seen.count(shared), 1)
+            self.assertIn("https://ext.example/one", seen)
+            self.assertIn("https://ext.example/two", seen)
+            self.assertIn("https://dns.example/dns-query", seen)
+            self.assertIn("https://wall.example/wallpaper.jpg", seen)
+            self.assertIn("https://epg.example/one.xml", seen)
+            self.assertIn("https://epg.example/two.xml", seen)
+            self.assertIn("https://live-nested.example/list.m3u", seen)
+            self.assertNotIn("not a URL", seen)
+
+    def test_verify_keeps_mainland_repository_urls_as_pending_information(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            stable = root / "stable"
+            stable.mkdir(parents=True)
+            gitee_url = "https://gitee.com/ds4213tv/hometv/raw/main/vendor/live/auto-cn.m3u"
+            (stable / "cn.json").write_text(
+                json.dumps({"spider": gitee_url, "sites": [], "lives": []}), encoding="utf-8"
+            )
+            (stable / "live-cn.json").write_text(
+                json.dumps(
+                    {
+                        "lives": [
+                            {
+                                "name": "Auto",
+                                "url": gitee_url,
+                                "boot": True,
+                                "ua": "okhttp/4.12.0",
+                                "timeout": 15,
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            probed: list[str] = []
+
+            statuses = verify_regions(
+                root,
+                ("cn",),
+                network=True,
+                prober=lambda url: probed.append(url),
+            )
+            health = json.loads((root / "health/cn.json").read_text(encoding="utf-8"))
+
+            self.assertEqual(statuses["cn"], "ok")
+            self.assertEqual(probed, [])
+            pending = [item for item in health["findings"] if item["code"] == "gitee-sync-pending"]
+            self.assertEqual(len(pending), 1)
+            self.assertEqual(pending[0]["path"], "$.spider")
 
     def test_compose_cli_prints_the_composed_paths(self):
         module = load_refresh_script()
