@@ -31,9 +31,6 @@ These are point-in-time reachability checks, not a guarantee that every channel 
 - Wang Er Xiao remains an isolated candidate because its Spider bundle is independent and should not be merged blindly into the Nitan configuration.
 - Aowu, Fantaiying, and OK remain disabled in `sources/registry.json` with dated reasons rather than silently disappearing.
 
-## Remaining gate before N1 use in China
+## Gate completion
 
-1. Merge the GitHub change after CI passes.
-2. Only after explicit owner authorization, mirror the repository to `https://gitee.com/ds4213tv/hometv`.
-3. Run the final end-to-end GET checks against the Gitee `stable/cn.json` URL and each mirrored static dependency.
-4. Point FongMi to the permanent Gitee URL only after those checks pass.
+The GitHub change was merged, the owner authorized the Gitee synchronization, and the final Gitee configuration plus all mirrored static dependencies passed mainland multi-carrier checks. See `docs/verification/2026-08-16-gitee-verification.md` for the final evidence and permanent FongMi URL.
