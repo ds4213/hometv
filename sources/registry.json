@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "sources": [
+    {
+      "id": "nitan-dm",
+      "name": "泥潭弹幕版",
+      "url": "https://nitan.ggff.net/config-dm.json",
+      "regions": ["us", "cn"],
+      "enabled": true,
+      "stable_regions": ["us", "cn"]
+    },
+    {
+      "id": "wangerxiao",
+      "name": "王二小主力三代",
+      "url": "https://9280.kstore.vip/aiwex.json",
+      "regions": ["cn"],
+      "enabled": true,
+      "stable_regions": []
+    },
+    {
+      "id": "aowu",
+      "name": "嗷呜",
+      "url": "https://cnb.cool/aooooowuuuuu/FreeSpider/-/git/raw/main/config",
+      "regions": ["cn"],
+      "enabled": false,
+      "stable_regions": [],
+      "disabled_reason": "HTTP 404 on 2026-08-16"
+    },
+    {
+      "id": "fantaiying",
+      "name": "饭太硬",
+      "url": "http://www.饭太硬.com/tv",
+      "regions": ["cn"],
+      "enabled": false,
+      "stable_regions": [],
+      "disabled_reason": "Connection timeout and no verified current JSON endpoint on 2026-08-16"
+    },
+    {
+      "id": "ok",
+      "name": "OK",
+      "url": "http://ok213.top/tv",
+      "regions": ["cn"],
+      "enabled": false,
+      "stable_regions": [],
+      "disabled_reason": "DNS returned no usable address on 2026-08-16"
+    }
+  ]
+}
