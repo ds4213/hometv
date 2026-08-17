@@ -1,67 +1,63 @@
 # HomeTV
 
-Managed FongMi configuration delivery for an N1 box. GitHub is the source of truth. The verified `main` branch is mirrored to Gitee for mainland delivery.
+HomeTV provides managed FongMi configuration files for an N1 box. GitHub is the source of truth; reviewed `main` content is synchronized to Gitee for mainland delivery. Parents only need the appropriate permanent URL below.
 
-## Permanent configuration paths
-
-US configuration:
+## FongMi settings
 
 ```text
-https://raw.githubusercontent.com/ds4213/hometv/main/stable/us.json
+中国点播：https://gitee.com/ds4213tv/hometv/raw/main/stable/cn.json
+中国直播：https://gitee.com/ds4213tv/hometv/raw/main/stable/live-cn.json
+美国点播：https://raw.githubusercontent.com/ds4213/hometv/main/stable/us.json
+美国直播：https://raw.githubusercontent.com/ds4213/hometv/main/stable/live-us.json
 ```
 
-Mainland configuration:
+Set the point-on-demand URL in FongMi's `点播` setting and the matching live URL in its `直播` setting. These URLs are permanent: fixing or rolling back a bad release changes repository content, never the URL configured on the box.
 
-```text
-https://gitee.com/ds4213tv/hometv/raw/main/stable/cn.json
-```
+## Owner operations
 
-The mainland JSON contains Gitee Raw dependency paths and passed mainland China Telecom, China Unicom, and China Mobile checks on 2026-08-16. See `docs/verification/2026-08-16-gitee-verification.md`.
+Run these commands from a reviewed checkout. They deliberately separate untrusted upstream input from the files parents consume.
 
-## Add another interface
-
-Add one object to `sources/registry.json`:
-
-```json
-{
-  "id": "short-stable-id",
-  "name": "Display name",
-  "url": "https://example.com/config.json",
-  "regions": ["us", "cn"],
-  "enabled": true,
-  "stable_regions": []
-}
-```
-
-Then run:
+### `candidates`
 
 ```powershell
 python scripts/refresh.py candidates
-python -m unittest discover -s tests -v
 ```
 
-The refresh writes only to `candidates/`, `vendor/`, and health metadata. It never replaces `stable/`.
+Fetches enabled upstream interfaces into `candidates/`, refreshes approved mirrored dependencies and records health information. It cannot publish or replace `stable/*.json` or `vendor/live/auto-*.m3u`; scheduled automation has the same boundary.
 
-## Promote a verified candidate
+### `compose`
 
 ```powershell
-python scripts/refresh.py promote --source nitan-dm --regions us cn
+python scripts/refresh.py compose
+```
+
+After reviewing candidates, builds the two curated VOD configurations, two LiveConfig documents, and the two guarded automatic playlists as one atomic release. Composition validates the 35 selected Wang sites, Spider hashes, regional repository URLs, and playlist guardrails before replacing any output. Review the resulting diff before committing it.
+
+### `verify`
+
+```powershell
 python scripts/refresh.py verify --regions us cn
 ```
 
-Different upstream configurations stay isolated because they may require incompatible Spider bundles. Promotion replaces the complete regional configuration rather than merging unrelated sites.
+Performs static regional validation of both VOD and LiveConfig files. Add `--network --probe-origin <where-the-check-ran>` only when making a clearly labelled delivery check; an overseas check is not evidence of mainland media playback.
 
-## Roll back
+### `publish-live`
 
-Find the last known-good commit and revert the promotion commit through Git history. Do not delete the stable paths; FongMi should keep using the same URL.
+Use this only to validate and atomically replace one automatic playlist that was generated elsewhere:
 
-## Health-report boundary
+```powershell
+python scripts/refresh.py publish-live --profile cn --input ops/iptv-api/profiles/cn/output/ipv4/result.m3u
+python scripts/refresh.py publish-live --profile us --input ops/iptv-api/profiles/us/output/ipv4/result.m3u
+```
 
-GitHub Actions runs from an overseas cloud network. Its reports use `probe_origin: github-actions-us-approximation` and do not claim mainland reachability. Mainland multi-carrier checks and the final Gitee Raw end-to-end check are recorded separately under `docs/verification/`.
+The command rejects malformed, unsafe, overly small, or sharply reduced playlists and retains the previous playlist on rejection.
 
-## Safety
+## Rollback and safety
 
-- Never commit passwords, cookies, access tokens, cloud-drive credentials, or signed personal URLs.
-- Treat Spider JAR, JavaScript, and Python changes as executable-code updates.
-- Scheduled automation refreshes candidates only. Stable promotion is explicit.
-- Push only verified `main` commits to Gitee; do not promote candidate configurations automatically.
+Roll back by reverting the bad content commit on GitHub `main`, then synchronize that reviewed result to Gitee. Do not delete or rename the four permanent paths above. Never commit passwords, cookies, access tokens, cloud-drive credentials, signed personal URLs, or personal server keys.
+
+GitHub Actions refreshes candidates only. Its scheduled commit is restricted to candidate data, approved mirrored dependencies, manifests, and health reports; it explicitly excludes `stable/**` and automatic playlists. Pull requests run tests and static verification but never refresh, commit, or push release content.
+
+## Verification boundary
+
+See [the current verification record](docs/verification/2026-08-16-curated-live-verification.md) for artifact state and the limits of the available checks. Gitee reachability does not prove that every independent third-party stream will play, and a US check does not prove mainland media playback.
