@@ -177,6 +177,28 @@ class LiveTests(unittest.TestCase):
                 with self.assertRaisesRegex(PlaylistError, message):
                     validate_playlist(raw, "us")
 
+    def test_validation_checks_each_x_tvg_and_url_tvg_url(self):
+        valid = make_playlist(20, False, False)
+        for attribute in (b"x-tvg-url", b"url-tvg"):
+            with self.subTest(attribute=attribute):
+                raw = valid.replace(
+                    b"#EXTM3U",
+                    b'#EXTM3U ' + attribute + b'="https://safe.example/a,https://192.168.1.1/b"',
+                )
+                with self.assertRaisesRegex(PlaylistError, "private address"):
+                    validate_playlist(raw, "us")
+
+    def test_validation_rejects_malformed_single_slash_referer(self):
+        valid = make_playlist(20, False, False)
+        raw = valid.replace(
+            b"#EXTINF:-1",
+            b'#EXTINF:-1 http-referer="https:/../foo"',
+            1,
+        )
+        self.assertIn('http-referer="https:/../foo"', parse_m3u(raw)[1][0].info)
+        with self.assertRaises(PlaylistError):
+            validate_playlist(raw, "us")
+
     def test_validation_rejects_ambiguous_hosts_and_publishes_rejection_health(self):
         valid = make_playlist(20, False, False)
         for host in [b"localhost", b"2130706433", b"0x7f000001", b"0177.0.0.1", b"127.1", b"bad host"]:

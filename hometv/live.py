@@ -29,7 +29,7 @@ SENSITIVE_QUERY_KEYS = {
 }
 GROUP_TITLE = re.compile(r'''\bgroup-title\s*=\s*["']([^"']*)["']''', re.IGNORECASE)
 URL_METADATA = re.compile(
-    r'''(?P<prefix>\b(?:x-tvg-url|url-tvg|tvg-logo|http-referer)\s*=\s*(?P<quote>["']))(?P<url>[^"']*)(?P=quote)''',
+    r'''(?P<prefix>\b(?P<attribute>x-tvg-url|url-tvg|tvg-logo|http-referer)\s*=\s*(?P<quote>["']))(?P<url>[^"']*)(?P=quote)''',
     re.IGNORECASE,
 )
 HTTP_HEADER_METADATA = re.compile(
@@ -155,6 +155,8 @@ def _validate_url(url: str) -> None:
     if hostname is None:
         raise PlaylistError("media URL must include a hostname")
     normalized_host = hostname.casefold().rstrip(".")
+    if not normalized_host or set(normalized_host) == {"."}:
+        raise PlaylistError("invalid hostname")
     if any(character.isspace() for character in normalized_host):
         raise PlaylistError("whitespace in hostname is not allowed")
     if normalized_host == "localhost" or normalized_host.endswith((".local", ".lan")):
@@ -188,7 +190,33 @@ def _validate_url(url: str) -> None:
 
 
 def _normalize_single_slash_http_url(url: str) -> str:
-    return re.sub(r"(?i)^(https?):/(?!/)", r"\1://", url)
+    normalized = re.sub(r"(?i)^(https?):/(?!/)", r"\1://", url)
+    if normalized == url:
+        return url
+    try:
+        parsed = urlsplit(normalized)
+        _port = parsed.port
+    except ValueError:
+        return url
+    hostname = parsed.hostname
+    if (
+        parsed.scheme not in {"http", "https"}
+        or not parsed.netloc
+        or hostname is None
+    ):
+        return url
+    normalized_host = hostname.casefold().rstrip(".")
+    if not normalized_host or set(normalized_host) == {"."}:
+        return url
+    try:
+        ipaddress.ip_address(normalized_host)
+    except ValueError:
+        if any(
+            not re.fullmatch(r"[a-z0-9-]+", label)
+            for label in normalized_host.split(".")
+        ):
+            return url
+    return normalized
 
 
 def _normalize_metadata_urls(metadata: str) -> str:
@@ -206,7 +234,13 @@ def _normalize_metadata_urls(metadata: str) -> str:
 
 
 def _metadata_urls(metadata: str) -> list[str]:
-    urls = [match.group("url").strip() for match in URL_METADATA.finditer(metadata)]
+    urls: list[str] = []
+    for match in URL_METADATA.finditer(metadata):
+        value = match.group("url").strip()
+        if match.group("attribute").casefold() in {"x-tvg-url", "url-tvg"}:
+            urls.extend(item.strip() for item in value.split(","))
+        else:
+            urls.append(value)
     for match in HTTP_HEADER_METADATA.finditer(metadata):
         referer = REFERER_HEADER.fullmatch(match.group("value"))
         if referer is not None:
