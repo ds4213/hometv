@@ -73,7 +73,9 @@ endpoint-list schema. Each source contains:
 - `candidate_mode: "quarantine"`;
 - `promotion: "manual"`;
 - a display prefix reserved for promoted sites;
-- a disabled reason when no endpoint is currently usable.
+- an optional administrative disabled reason only when monitoring is
+  deliberately paused. Reachability failure is represented by source health,
+  not by disabling monitoring.
 
 Each endpoint record contains:
 
@@ -96,6 +98,20 @@ The initial ordered endpoint inventory is:
 Discovery does not equal trust. An alternate is attempted only after its exact
 URL and provenance have been reviewed into the registry. Runtime redirects do
 not silently become new registry entries.
+
+### Discovered Endpoint Catalog
+
+Unverified addresses are preserved separately in
+`sources/discovered-endpoints.json`. Each record contains `source_id`, `url`,
+`provenance`, `discovered_at`, `status`, `last_checked_at`, and a sanitized
+evidence summary. Valid statuses are `unverified`, `unavailable`, and
+`promoted`.
+
+The runtime candidate refresher never reads this catalog. A read-only probe
+command may evaluate one catalog URL. Only a reviewed change may copy a usable
+URL into the source registry with `reviewed_at`; the catalog entry then becomes
+`promoted`. This preserves backup addresses without granting an untrusted URL
+automatic network access.
 
 ## Candidate Fetching
 
