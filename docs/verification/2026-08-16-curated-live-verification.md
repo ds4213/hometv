@@ -6,7 +6,8 @@
 - Generation base: `71eadcf6b2b28a261884adbb66d0b1af7809fd77` (`Correct Wang verification hash`).
 - Metadata, Referer validation, and manifest-deduplication code snapshot: `e51f41e488482f5106c4e287d2abb9228aeca59c` (`Harden playlist metadata and mirror evidence`).
 - Generated-artifact snapshot: `809f606fd2166a2a47457ae4aa81d4f3dc6046ae` (`Regenerate curated playlist artifacts`).
-- Generated and verified on: `2026-08-17T00:28:27.639196+00:00` (UTC; the later of the two network health reports).
+- Network-health snapshot: `0b81f51444e32c1979e4ab6da788a97f8e49b788` (`Refresh network verification health`).
+- Generated and verified on: `2026-08-17T00:31:15.863478+00:00` (UTC; the later of the two network health reports).
 - Runtime: Python `3.11.9`.
 - Unit suite: `84` tests passed before generation and again after evidence collection (`python -m unittest discover -s tests -v`).
 - Static verification: `python scripts/refresh.py verify --regions us cn` completed with warnings only: the intentional cleartext event dependency.
