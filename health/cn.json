@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-08-16T20:42:26.410689+00:00",
+  "generated_at": "2026-08-17T00:13:05.678249+00:00",
   "region": "cn",
   "probe_origin": "local-us-network",
-  "status": "warning",
+  "status": "error",
   "findings": [
     {
       "severity": "warning",
@@ -11,28 +11,46 @@
       "path": "$.lives[0].url"
     },
     {
-      "severity": "info",
-      "code": "gitee-sync-pending",
-      "message": "repository-owned Gitee URL requires the separately authorized Gitee sync",
-      "path": ""
+      "severity": "warning",
+      "code": "cleartext-http",
+      "message": "cleartext HTTP dependency",
+      "path": "$.lives[2].url"
     },
     {
       "severity": "info",
       "code": "gitee-sync-pending",
       "message": "repository-owned Gitee URL requires the separately authorized Gitee sync",
-      "path": ""
+      "path": "$.spider"
     },
     {
       "severity": "info",
       "code": "gitee-sync-pending",
       "message": "repository-owned Gitee URL requires the separately authorized Gitee sync",
-      "path": ""
+      "path": "$.sites[0].ext"
     },
     {
       "severity": "info",
       "code": "gitee-sync-pending",
       "message": "repository-owned Gitee URL requires the separately authorized Gitee sync",
-      "path": ""
+      "path": "$.sites[8].api"
+    },
+    {
+      "severity": "info",
+      "code": "gitee-sync-pending",
+      "message": "repository-owned Gitee URL requires the separately authorized Gitee sync",
+      "path": "$.sites[14].jar"
+    },
+    {
+      "severity": "info",
+      "code": "gitee-sync-pending",
+      "message": "repository-owned Gitee URL requires the separately authorized Gitee sync",
+      "path": "$.lives[1].url"
+    },
+    {
+      "severity": "info",
+      "code": "gitee-sync-pending",
+      "message": "repository-owned Gitee URL requires the separately authorized Gitee sync",
+      "path": "$.lives[0].url"
     }
   ],
   "probes": [
@@ -40,7 +58,7 @@
       "target": "https://vod.catvod.ggff.net/guazi",
       "ok": true,
       "status_code": 200,
-      "elapsed_ms": 172,
+      "elapsed_ms": 125,
       "bytes": 17152,
       "sha256": "ed3ead91b84204119fe29f2aedce60365506791813431dd5c947ab357c8e273c",
       "content_type": "application/json",
@@ -51,7 +69,7 @@
       "target": "https://vod.catvod.ggff.net/uvod",
       "ok": true,
       "status_code": 200,
-      "elapsed_ms": 1125,
+      "elapsed_ms": 1390,
       "bytes": 32861,
       "sha256": "c1704edb487800de8e47106cf6bafffcd72d979c9c19b44a1bf18dd5a0750890",
       "content_type": "application/json",
@@ -62,7 +80,7 @@
       "target": "https://vod.catvod.ggff.net/aigua",
       "ok": true,
       "status_code": 200,
-      "elapsed_ms": 375,
+      "elapsed_ms": 469,
       "bytes": 27623,
       "sha256": "c82d6822bed00bb8085c6736c8bd9d120da31d94eb6ab57f1de2f63b2ea7eadb",
       "content_type": "application/json",
@@ -84,7 +102,7 @@
       "target": "https://vod.catvod.ggff.net/oule",
       "ok": true,
       "status_code": 200,
-      "elapsed_ms": 1079,
+      "elapsed_ms": 1375,
       "bytes": 17798,
       "sha256": "b82a99d262e27721127fff9f4ea5760f95504d7a5dd0210a2bad0242284bbc93",
       "content_type": "application/json",
@@ -95,7 +113,7 @@
       "target": "https://vod.catvod.ggff.net/jianpian",
       "ok": true,
       "status_code": 200,
-      "elapsed_ms": 1578,
+      "elapsed_ms": 1047,
       "bytes": 12076,
       "sha256": "1c1ed4c87d4fea1420d24a3336754e72c48e9945b68977aeaf4652b6385d645f",
       "content_type": "application/json",
@@ -106,7 +124,7 @@
       "target": "https://vod.catvod.ggff.net/sport",
       "ok": true,
       "status_code": 200,
-      "elapsed_ms": 140,
+      "elapsed_ms": 110,
       "bytes": 314,
       "sha256": "a9fd627b01aebbb81b7cb1e0bf7a2d2f89f994dd995d2b66cacdff4ab0adcce6",
       "content_type": "application/json",
@@ -117,7 +135,7 @@
       "target": "https://vod.catvod.ggff.net/kq",
       "ok": true,
       "status_code": 200,
-      "elapsed_ms": 141,
+      "elapsed_ms": 125,
       "bytes": 1421,
       "sha256": "7aef30b2cf731ecf11cf58473c840a8f3d4c3de6450f85e409e106b1be1d98a3",
       "content_type": "application/json",
@@ -139,7 +157,7 @@
       "target": "https://vod.catvod.ggff.net/tg",
       "ok": true,
       "status_code": 200,
-      "elapsed_ms": 109,
+      "elapsed_ms": 140,
       "bytes": 32,
       "sha256": "ad841869927d9bde0cf7f18f401e8940dade04681aee23733b64c489a52e4f3c",
       "content_type": "application/json",
@@ -147,15 +165,92 @@
       "media_target": ""
     },
     {
+      "target": "https://storage.7x24cc.com/storage-server/presigned/ss1/a6-online-fileupload/newMediaImage/3C3AB7A_773_ertong_20250828171550247newMediaImage.txt",
+      "ok": true,
+      "status_code": 200,
+      "elapsed_ms": 1375,
+      "bytes": 3666,
+      "sha256": "738516bd6b15f512493f62b5a4a2f13423559d1364ff310fadf0d18d16a03f38",
+      "content_type": "text/plain",
+      "error": "",
+      "media_target": ""
+    },
+    {
+      "target": "https://storage.7x24cc.com/storage-server/presigned/ss1/a6-online-fileupload/newMediaImage/4A3AA71_773_xiaoxue_20250828171535645newMediaImage.txt",
+      "ok": true,
+      "status_code": 200,
+      "elapsed_ms": 1313,
+      "bytes": 9611,
+      "sha256": "691f828cbccf2f34932f8c3e6fc25299de4f050572699ab1e413ee756e6a4647",
+      "content_type": "text/plain",
+      "error": "",
+      "media_target": ""
+    },
+    {
+      "target": "https://dns.alidns.com/dns-query",
+      "ok": false,
+      "status_code": 400,
+      "elapsed_ms": 0,
+      "bytes": 0,
+      "sha256": "",
+      "content_type": "",
+      "error": "HTTP 400",
+      "media_target": ""
+    },
+    {
+      "target": "https://doh.pub/dns-query",
+      "ok": false,
+      "status_code": 502,
+      "elapsed_ms": 0,
+      "bytes": 0,
+      "sha256": "",
+      "content_type": "",
+      "error": "HTTP 502",
+      "media_target": ""
+    },
+    {
       "target": "http://82.156.243.185:33389/fwc.m3u",
       "ok": true,
       "status_code": 206,
-      "elapsed_ms": 438,
+      "elapsed_ms": 531,
       "bytes": 368,
       "sha256": "fd9e3d31a349d38cb3d74b88cb2c4c3be330654edc5431d0602ef9e3372453d7",
       "content_type": "application/vnd.apple.mpegurl",
       "error": "",
       "media_target": "https://cdn.jsdelivr.net/gh/jkwu5472/first/media.m3u8"
+    },
+    {
+      "target": "https://epg.aptv.app/pp.xml.gz",
+      "ok": false,
+      "status_code": 403,
+      "elapsed_ms": 0,
+      "bytes": 0,
+      "sha256": "",
+      "content_type": "",
+      "error": "HTTP 403",
+      "media_target": ""
+    },
+    {
+      "target": "https://epg.aptv.app/xml",
+      "ok": false,
+      "status_code": 403,
+      "elapsed_ms": 0,
+      "bytes": 0,
+      "sha256": "",
+      "content_type": "",
+      "error": "HTTP 403",
+      "media_target": ""
+    },
+    {
+      "target": "https://epg.zsdc.eu.org/t.xml",
+      "ok": false,
+      "status_code": 0,
+      "elapsed_ms": 0,
+      "bytes": 0,
+      "sha256": "",
+      "content_type": "",
+      "error": "response exceeds 4 MiB probe limit",
+      "media_target": ""
     }
   ]
 }
