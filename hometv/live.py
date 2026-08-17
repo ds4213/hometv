@@ -29,9 +29,14 @@ SENSITIVE_QUERY_KEYS = {
 }
 GROUP_TITLE = re.compile(r'''\bgroup-title\s*=\s*["']([^"']*)["']''', re.IGNORECASE)
 URL_METADATA = re.compile(
-    r'''\b(?:x-tvg-url|url-tvg|tvg-logo)\s*=\s*["']([^"']+)["']''',
+    r'''(?P<prefix>\b(?:x-tvg-url|url-tvg|tvg-logo|http-referer)\s*=\s*(?P<quote>["']))(?P<url>[^"']*)(?P=quote)''',
     re.IGNORECASE,
 )
+HTTP_HEADER_METADATA = re.compile(
+    r'''(?P<prefix>\bhttp-header\s*=\s*(?P<quote>["']))(?P<value>[^"']*)(?P=quote)''',
+    re.IGNORECASE,
+)
+REFERER_HEADER = re.compile(r'''^(?P<prefix>\s*referer\s*=\s*)(?P<url>.*)$''', re.IGNORECASE)
 LEGACY_IPV4_PART = re.compile(r"(?:0x[0-9a-f]+|[0-9]+)", re.IGNORECASE)
 
 
@@ -98,6 +103,7 @@ def parse_m3u(raw: bytes) -> tuple[str, list[M3UEntry]]:
     if not nonempty or not nonempty[0][1].startswith("#EXTM3U"):
         raise PlaylistError("playlist must start with #EXTM3U")
     header_index, header = nonempty[0]
+    header = _normalize_metadata_urls(header)
     entries: list[M3UEntry] = []
     index = header_index + 1
     while index < len(lines):
@@ -109,6 +115,7 @@ def parse_m3u(raw: bytes) -> tuple[str, list[M3UEntry]]:
             if "," not in line:
                 raise PlaylistError("#EXTINF is missing a channel name")
             info, name = line.rsplit(",", 1)
+            info = _normalize_metadata_urls(info)
             name = name.strip()
             if not name:
                 raise PlaylistError("empty channel name")
@@ -180,10 +187,36 @@ def _validate_url(url: str) -> None:
             raise PlaylistError("sensitive query parameter is not allowed")
 
 
+def _normalize_single_slash_http_url(url: str) -> str:
+    return re.sub(r"(?i)^(https?):/(?!/)", r"\1://", url)
+
+
+def _normalize_metadata_urls(metadata: str) -> str:
+    def replace_url(match: re.Match[str]) -> str:
+        return f"{match.group('prefix')}{_normalize_single_slash_http_url(match.group('url'))}{match.group('quote')}"
+
+    def replace_header(match: re.Match[str]) -> str:
+        referer = REFERER_HEADER.fullmatch(match.group("value"))
+        if referer is None:
+            return match.group(0)
+        normalized = _normalize_single_slash_http_url(referer.group("url"))
+        return f"{match.group('prefix')}{referer.group('prefix')}{normalized}{match.group('quote')}"
+
+    return HTTP_HEADER_METADATA.sub(replace_header, URL_METADATA.sub(replace_url, metadata))
+
+
+def _metadata_urls(metadata: str) -> list[str]:
+    urls = [match.group("url").strip() for match in URL_METADATA.finditer(metadata)]
+    for match in HTTP_HEADER_METADATA.finditer(metadata):
+        referer = REFERER_HEADER.fullmatch(match.group("value"))
+        if referer is not None:
+            urls.append(referer.group("url").strip())
+    return urls
+
+
 def _validate_metadata_urls(metadata: str) -> None:
-    for match in URL_METADATA.finditer(metadata):
-        for url in match.group(1).split(","):
-            _validate_url(url.strip())
+    for url in _metadata_urls(metadata):
+        _validate_url(url)
 
 
 def validate_playlist(

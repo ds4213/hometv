@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -53,6 +54,46 @@ class RefreshError(RuntimeError):
     """Raised when a candidate cannot be promoted safely."""
 
 
+def _record_candidate_bytes(path: Path) -> None:
+    """Record final serialized-candidate facts while retaining source-response facts."""
+    raw = path.read_bytes()
+    metadata_path = path.with_name("metadata.json")
+    try:
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise RefreshError(f"unable to read candidate metadata for {path.parent.name}: {exc}") from exc
+    if not isinstance(metadata, dict):
+        raise RefreshError(f"candidate metadata for {path.parent.name} is not an object")
+    metadata["candidate_bytes"] = len(raw)
+    metadata["candidate_sha256"] = hashlib.sha256(raw).hexdigest()
+    temporary = metadata_path.with_name(metadata_path.name + ".tmp")
+    try:
+        temporary.write_text(
+            json.dumps(metadata, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+            newline="\n",
+        )
+        temporary.replace(metadata_path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def _unique_mirror_requests(requests: tuple) -> tuple:
+    """Deduplicate exact requests and reject conflicting destination ownership."""
+    unique: dict[str, object] = {}
+    for request in requests:
+        current = unique.get(request.repository_path)
+        if current is None:
+            unique[request.repository_path] = request
+            continue
+        if (
+            current.source_url != request.source_url
+            or current.expected_md5.casefold() != request.expected_md5.casefold()
+        ):
+            raise RefreshError(f"conflicting mirror requests for {request.repository_path}")
+    return tuple(unique.values())
+
+
 def refresh_candidates(
     root: Path,
     fetcher: Callable[[Source], FetchedConfig] = fetch_config,
@@ -87,6 +128,7 @@ def refresh_candidates(
                 if cn_build.mirrors:
                     mirror_func(cn_build.mirrors, root)
             path = write_candidate(fetched, root / "candidates")
+            _record_candidate_bytes(path)
             results.append(
                 {
                     "source": source.id,
@@ -271,7 +313,9 @@ def compose_stable(
         _validation_errors(validate_config(vod[region].config, region), f"{region} VOD")
         _validation_errors(validate_live_config(live[region], region), f"{region} live config")
 
-    mirrors = tuple(request for region in ("us", "cn") for request in vod[region].mirrors)
+    mirrors = _unique_mirror_requests(
+        tuple(request for region in ("us", "cn") for request in vod[region].mirrors)
+    )
     try:
         mirror_func(mirrors, root)
     except (BuildError, OSError, urllib.error.URLError) as exc:

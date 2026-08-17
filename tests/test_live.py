@@ -78,6 +78,21 @@ class LiveTests(unittest.TestCase):
         self.assertEqual(entries[0].name, "CCTV-1")
         self.assertEqual(entries[1].group, "卫视频道")
 
+    def test_parse_merge_and_serialize_normalize_referer_metadata(self):
+        raw = (
+            b'#EXTM3U\n#EXTINF:-1 http-referer="https:/aptv.app/" '
+            b'http-header="Referer=https:/live.example/",One\nhttps://media.example/one\n'
+        )
+        header, entries = parse_m3u(raw)
+        self.assertEqual(header, "#EXTM3U")
+        self.assertIn('http-referer="https://aptv.app/"', entries[0].info)
+        self.assertIn('http-header="Referer=https://live.example/"', entries[0].info)
+        self.assertEqual(
+            merge_playlists([raw]),
+            b'#EXTM3U\n#EXTINF:-1 http-referer="https://aptv.app/" '
+            b'http-header="Referer=https://live.example/",One\nhttps://media.example/one\n',
+        )
+
     def test_serialize_round_trips_entries_with_terminal_newline(self):
         raw = serialize_m3u(
             "#EXTM3U x-tvg-url=\"https://epg.example/guide.xml.gz\"",
@@ -148,6 +163,19 @@ class LiveTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(PlaylistError, "private address"):
             validate_playlist(private_logo, "us")
+
+    def test_validation_rejects_unsafe_referer_metadata(self):
+        valid = make_playlist(20, False, False)
+        metadata_cases = [
+            (b'http-referer="https://192.168.1.20/"', "private address"),
+            (b'http-header="Referer=https://epg.example/guide?token=secret"', "sensitive query"),
+            (b'http-header="Referer=ftp://unsupported.example/"', "HTTP"),
+        ]
+        for metadata, message in metadata_cases:
+            with self.subTest(metadata=metadata):
+                raw = valid.replace(b"#EXTINF:-1", b"#EXTINF:-1 " + metadata, 1)
+                with self.assertRaisesRegex(PlaylistError, message):
+                    validate_playlist(raw, "us")
 
     def test_validation_rejects_ambiguous_hosts_and_publishes_rejection_health(self):
         valid = make_playlist(20, False, False)

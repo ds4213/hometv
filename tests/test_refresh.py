@@ -13,10 +13,11 @@ from unittest.mock import Mock, patch
 import urllib.error
 
 from hometv.fetch import FetchedConfig
+from hometv.build import MirrorRequest
 import hometv.refresh as refresh
 from hometv.live import PlaylistError
 from hometv.refresh import RefreshError, promote_source, refresh_candidates, verify_regions
-from hometv.registry import Source
+from hometv.registry import Source, load_registry
 from hometv.validate import ProbeResult
 
 
@@ -173,6 +174,30 @@ class RefreshTests(unittest.TestCase):
             )
             self.assertEqual(set(generated_snapshot(root)), set(GENERATED_PATHS))
             self.assertNotIn(b"rtmp://", (root / "vendor/live/auto-us.m3u").read_bytes())
+
+    def test_compose_mirrors_shared_repository_path_once(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            prepare_compose_root(root)
+            mirror = Mock()
+
+            refresh.compose_stable(
+                root,
+                mirror_func=mirror,
+                event_fetcher=lambda _url: (_ for _ in ()).throw(urllib.error.URLError("offline")),
+            )
+
+            requests = mirror.call_args.args[0]
+            self.assertEqual([item.repository_path for item in requests].count("vendor/wanger/spider.jpg"), 1)
+
+    def test_compose_rejects_conflicting_mirror_requests(self):
+        with self.assertRaisesRegex(RefreshError, "conflicting mirror requests"):
+            refresh._unique_mirror_requests(
+                (
+                    MirrorRequest("https://one.example/spider", "vendor/shared.bin", "a"),
+                    MirrorRequest("https://two.example/spider", "vendor/shared.bin", "a"),
+                )
+            )
 
     def test_missing_wanger_key_keeps_all_known_good_generated_files(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -349,6 +374,27 @@ class RefreshTests(unittest.TestCase):
 
             self.assertEqual(generated_snapshot(root), originals)
             self.assertEqual((root / "sources/wanger-curated.json").read_bytes(), policy_before)
+
+    def test_candidate_metadata_records_final_serialized_bytes_without_replacing_source_response_facts(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            write_registry(root)
+            source = next(iter(load_registry(root / "sources/registry.json")))
+            content = {"sites": [{"key": "B"}, {"key": "A"}], "spider": "https://example.com/spider"}
+            response = b'{"sites":[{"key":"B"},{"key":"A"}],"spider":"https://example.com/spider"}'
+            fetched_config = FetchedConfig(
+                source, content, response, "2026-08-17T00:00:00+00:00", hashlib.sha256(response).hexdigest()
+            )
+
+            result = refresh_candidates(root, fetcher=lambda _source: fetched_config, mirror_func=Mock())
+
+            self.assertEqual(result[0]["status"], "updated")
+            upstream = (root / "candidates/example/upstream.json").read_bytes()
+            metadata = json.loads((root / "candidates/example/metadata.json").read_text(encoding="utf-8"))
+            self.assertEqual(metadata["bytes"], len(response))
+            self.assertEqual(metadata["sha256"], hashlib.sha256(response).hexdigest())
+            self.assertEqual(metadata["candidate_bytes"], len(upstream))
+            self.assertEqual(metadata["candidate_sha256"], hashlib.sha256(upstream).hexdigest())
 
     def test_verify_reads_live_config_and_probes_live_urls(self):
         with tempfile.TemporaryDirectory() as temp_dir:
