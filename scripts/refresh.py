@@ -43,7 +43,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "candidates":
         results = refresh_candidates(root)
         print(json.dumps(results, ensure_ascii=False, indent=2))
-        return 1 if any(item["status"] == "failed" for item in results) else 0
+        return 1 if any(item.get("blocking", False) for item in results) else 0
     if args.command == "compose":
         composed = compose_stable(root)
         print(json.dumps({"composed": composed}, ensure_ascii=False, indent=2))

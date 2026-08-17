@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from datetime import datetime, timezone
 import hashlib
 import json
 import os
@@ -54,6 +55,43 @@ class RefreshError(RuntimeError):
     """Raised when a candidate cannot be promoted safely."""
 
 
+def _write_source_health(root: Path, source: Source, result: dict) -> Path:
+    destination = root / "health" / "sources" / f"{source.id}.json"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "source": source.id,
+        "name": source.name,
+        "url": source.url,
+        "checked_at": datetime.now(timezone.utc).isoformat(),
+        **result,
+    }
+    temporary_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            "w",
+            encoding="utf-8",
+            newline="\n",
+            dir=destination.parent,
+            prefix=f".{source.id}.",
+            suffix=".tmp",
+            delete=False,
+        ) as temporary:
+            json.dump(payload, temporary, ensure_ascii=False, indent=2)
+            temporary.write("\n")
+            temporary_path = Path(temporary.name)
+        os.replace(temporary_path, destination)
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
+    return destination
+
+
+def _validate_candidate_sites(source: Source, content: dict) -> None:
+    sites = content.get("sites")
+    if not isinstance(sites, list) or not sites:
+        raise RefreshError(f"{source.id}: configuration must contain non-empty sites")
+
+
 def _record_candidate_bytes(path: Path) -> None:
     """Record final serialized-candidate facts while retaining source-response facts."""
     raw = path.read_bytes()
@@ -102,16 +140,18 @@ def refresh_candidates(
     results: list[dict] = []
     for source in load_registry(root / "sources" / "registry.json"):
         if not source.enabled:
-            results.append(
-                {
-                    "source": source.id,
-                    "status": "disabled",
-                    "message": source.disabled_reason,
-                }
-            )
+            result = {
+                "source": source.id,
+                "status": "disabled",
+                "blocking": False,
+                "message": source.disabled_reason,
+            }
+            _write_source_health(root, source, result)
+            results.append(result)
             continue
         try:
             fetched = fetcher(source)
+            _validate_candidate_sites(source, fetched.content)
             if source.id == "wangerxiao":
                 policy = load_curated_source(root / "sources" / "wanger-curated.json")
                 if policy.source_id != source.id:
@@ -123,22 +163,36 @@ def refresh_candidates(
                 )
                 jar = f"{GITEE_RAW_BASE}/vendor/wanger/spider.jpg;md5;{digest}"
                 select_curated_sites(fetched.content, policy, jar)
-            if "cn" in source.regions:
+            if source.id == "nitan-dm" and "cn" in source.regions:
                 cn_build = build_cn(fetched.content, GITEE_RAW_BASE)
                 if cn_build.mirrors:
                     mirror_func(cn_build.mirrors, root)
             path = write_candidate(fetched, root / "candidates")
             _record_candidate_bytes(path)
-            results.append(
-                {
-                    "source": source.id,
-                    "status": "updated",
-                    "path": path.relative_to(root).as_posix(),
-                    "sha256": fetched.sha256,
-                }
-            )
+            result = {
+                "source": source.id,
+                "status": "updated",
+                "blocking": False,
+                "path": path.relative_to(root).as_posix(),
+                "sha256": fetched.sha256,
+            }
         except (FetchError, OSError, TypeError, ValueError, RuntimeError) as exc:
-            results.append({"source": source.id, "status": "failed", "message": str(exc)})
+            result = {
+                "source": source.id,
+                "status": "failed",
+                "blocking": bool(source.stable_regions),
+                "message": str(exc),
+            }
+        try:
+            _write_source_health(root, source, result)
+        except OSError as exc:
+            result = {
+                "source": source.id,
+                "status": "failed",
+                "blocking": True,
+                "message": f"unable to write source health: {exc}",
+            }
+        results.append(result)
     return results
 
 

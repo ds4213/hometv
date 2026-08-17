@@ -12,7 +12,7 @@ import unittest
 from unittest.mock import Mock, patch
 import urllib.error
 
-from hometv.fetch import FetchedConfig
+from hometv.fetch import FetchError, FetchedConfig
 from hometv.build import MirrorRequest
 import hometv.refresh as refresh
 from hometv.live import PlaylistError
@@ -112,7 +112,12 @@ def make_live_playlist(channel_count: int) -> bytes:
     return ("\n".join(lines) + "\n").encode()
 
 
-def write_registry(root: Path) -> None:
+def write_registry(
+    root: Path,
+    *,
+    source_id: str = "example",
+    stable_regions: tuple[str, ...] = ("us", "cn"),
+) -> None:
     path = root / "sources" / "registry.json"
     path.parent.mkdir(parents=True)
     path.write_text(
@@ -121,12 +126,12 @@ def write_registry(root: Path) -> None:
                 "schema": 1,
                 "sources": [
                     {
-                        "id": "example",
+                        "id": source_id,
                         "name": "Example",
                         "url": "https://example.com/config.json",
                         "regions": ["us", "cn"],
                         "enabled": True,
-                        "stable_regions": ["us", "cn"],
+                        "stable_regions": list(stable_regions),
                     }
                 ],
             }
@@ -396,6 +401,105 @@ class RefreshTests(unittest.TestCase):
             self.assertEqual(metadata["candidate_bytes"], len(upstream))
             self.assertEqual(metadata["candidate_sha256"], hashlib.sha256(upstream).hexdigest())
 
+    def test_candidate_refresh_writes_simple_success_health(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            write_registry(root)
+
+            result = refresh_candidates(
+                root,
+                fetcher=lambda source: fetched(source, {"sites": [{"key": "one"}]}),
+                mirror_func=Mock(),
+            )
+
+            self.assertFalse(result[0]["blocking"])
+            health = json.loads(
+                (root / "health/sources/example.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(health["source"], "example")
+            self.assertEqual(health["status"], "updated")
+            self.assertEqual(health["path"], "candidates/example/upstream.json")
+            self.assertEqual(health["sha256"], "abc123")
+            self.assertFalse(health["blocking"])
+            self.assertIn("checked_at", health)
+
+    def test_candidate_only_failure_writes_health_and_preserves_last_candidate(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            write_registry(root, stable_regions=())
+            candidate_dir = root / "candidates/example"
+            candidate_dir.mkdir(parents=True)
+            upstream = candidate_dir / "upstream.json"
+            metadata = candidate_dir / "metadata.json"
+            upstream.write_bytes(b'{"known":"good"}\n')
+            metadata.write_bytes(b'{"known":"metadata"}\n')
+            before = (upstream.read_bytes(), metadata.read_bytes())
+
+            def fail(_source):
+                raise FetchError("offline")
+
+            result = refresh_candidates(root, fetcher=fail, mirror_func=Mock())
+
+            self.assertEqual(result[0]["status"], "failed")
+            self.assertFalse(result[0]["blocking"])
+            self.assertEqual((upstream.read_bytes(), metadata.read_bytes()), before)
+            health = json.loads(
+                (root / "health/sources/example.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(health["status"], "failed")
+            self.assertEqual(health["message"], "offline")
+            self.assertFalse(health["blocking"])
+
+    def test_stable_source_failure_is_blocking(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            write_registry(root)
+
+            result = refresh_candidates(
+                root,
+                fetcher=lambda _source: (_ for _ in ()).throw(FetchError("offline")),
+                mirror_func=Mock(),
+            )
+
+            self.assertTrue(result[0]["blocking"])
+            health = json.loads(
+                (root / "health/sources/example.json").read_text(encoding="utf-8")
+            )
+            self.assertTrue(health["blocking"])
+
+    def test_candidate_refresh_rejects_empty_sites_and_records_failure(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            write_registry(root, stable_regions=())
+
+            result = refresh_candidates(
+                root,
+                fetcher=lambda source: fetched(source, {"sites": []}),
+                mirror_func=Mock(),
+            )
+
+            self.assertEqual(result[0]["status"], "failed")
+            self.assertIn("non-empty sites", result[0]["message"])
+            self.assertFalse((root / "candidates/example/upstream.json").exists())
+
+    def test_candidates_cli_exits_only_for_blocking_failures(self):
+        module = load_refresh_script()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with patch.object(
+                module,
+                "refresh_candidates",
+                return_value=[{"source": "aowu", "status": "failed", "blocking": False}],
+            ):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(module.main(["--root", temp_dir, "candidates"]), 0)
+            with patch.object(
+                module,
+                "refresh_candidates",
+                return_value=[{"source": "nitan-dm", "status": "failed", "blocking": True}],
+            ):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(module.main(["--root", temp_dir, "candidates"]), 1)
+
     def test_verify_reads_live_config_and_probes_live_urls(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -636,7 +740,14 @@ class RefreshTests(unittest.TestCase):
             write_registry(root)
 
             def fake_fetch(source):
-                return fetched(source, {"spider": "https://example.com/spider.jar", "sites": [], "lives": []})
+                return fetched(
+                    source,
+                    {
+                        "spider": "https://example.com/spider.jar",
+                        "sites": [{"key": "one"}],
+                        "lives": [],
+                    },
+                )
 
             result = refresh_candidates(root, fetcher=fake_fetch)
             self.assertEqual(result[0]["status"], "updated")
@@ -646,14 +757,14 @@ class RefreshTests(unittest.TestCase):
     def test_mainland_candidate_refreshes_mirrored_dependencies(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
-            write_registry(root)
+            write_registry(root, source_id="nitan-dm")
 
             def fake_fetch(source):
                 return fetched(
                     source,
                     {
                         "spider": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/awdm.png",
-                        "sites": [],
+                        "sites": [{"key": "one"}],
                         "lives": [],
                     },
                 )
