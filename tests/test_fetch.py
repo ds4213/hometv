@@ -46,6 +46,23 @@ def source() -> Source:
 
 class FetchTests(unittest.TestCase):
     @patch("urllib.request.urlopen")
+    def test_fetch_encodes_unicode_hostname_with_idna(self, urlopen):
+        idn_source = Source(
+            id="fantaiying",
+            name="饭太硬",
+            url="http://www.饭太硬.com/tv",
+            regions=("us", "cn"),
+            enabled=True,
+            stable_regions=(),
+        )
+        urlopen.return_value = FakeResponse(b'{"sites": [{"key": "one"}]}')
+
+        fetch_config(idn_source)
+
+        request = urlopen.call_args.args[0]
+        self.assertEqual(request.full_url, "http://www.xn--sss604efuw.com/tv")
+
+    @patch("urllib.request.urlopen")
     def test_fetches_a_json_object(self, urlopen):
         urlopen.return_value = FakeResponse(b'{"sites": []}')
         fetched = fetch_config(source())

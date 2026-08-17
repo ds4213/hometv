@@ -6,6 +6,7 @@ import hashlib
 import json
 from pathlib import Path
 import urllib.error
+import urllib.parse
 import urllib.request
 
 from hometv.registry import Source
@@ -33,8 +34,19 @@ def _looks_like_html(raw: bytes, content_type: str) -> bool:
     return "html" in content_type.lower() or prefix.startswith((b"<!doctype html", b"<html"))
 
 
+def _idna_url(url: str) -> str:
+    parts = urllib.parse.urlsplit(url)
+    if parts.hostname is None:
+        return url
+    hostname = parts.hostname.encode("idna").decode("ascii")
+    netloc = hostname
+    if parts.port is not None:
+        netloc = f"{netloc}:{parts.port}"
+    return urllib.parse.urlunsplit(parts._replace(netloc=netloc))
+
+
 def fetch_config(source: Source, timeout: float = 20.0) -> FetchedConfig:
-    request = urllib.request.Request(source.url, headers={"User-Agent": USER_AGENT})
+    request = urllib.request.Request(_idna_url(source.url), headers={"User-Agent": USER_AGENT})
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
             status = getattr(response, "status", 200)
