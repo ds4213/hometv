@@ -3,7 +3,8 @@
 ## Snapshot
 
 - Branch under preparation: `agent/curated-wanger-implementation`.
-- Task-6 base and checked commit: `e593b365dd3ed8d6eaff83d4a92f5951b523c4f7` (`Harden composed playlist refresh`).
+- Task-6 base: `e593b365dd3ed8d6eaff83d4a92f5951b523c4f7` (`Harden composed playlist refresh`).
+- Initial verification-record commit: `9e80c7c723001539a42c41ef4b8335bfaa632e4a` (`Document curated HomeTV delivery`).
 - Recorded at: `2026-08-17T00:02:53.9542158Z` (UTC).
 - Runtime: Python `3.11.9`.
 - Unit suite: `79` tests passed (`python -m unittest discover -s tests -v`).
@@ -39,7 +40,7 @@ Each has `ua: okhttp/4.12.0` and `timeout: 15`; only the first has `boot: true`.
 | Item | Source / expected hash | Mirrored evidence available now |
 | --- | --- | --- |
 | Nitan candidate | `https://nitan.ggff.net/config-dm.json`; candidate SHA-256 `1877aa02c8f073e0df754a12eae2893b047a3e8861d10cb08e821595cd7e8901` | Nitan Spider source is `https://github.com/nitan-tv/nitan/raw/refs/heads/main/awdm.png`; `vendor/nitan/awdm.png` SHA-256 `c6dade7d08405128d8708df27d8cc4796907f35dd4c33626a220f0d8f8e45fc5`. The source does not declare an MD5. |
-| Wang candidate | `https://9280.kstore.vip/aiwex.json`; candidate SHA-256 `b05dbef7c3e1406ac43029fa2c42d0708fbb2b6de4ee722251c9c5714654f354` | Spider source `http://oss4liview.moji.com/thd_file/2026/08/14/f9c4d189ee5f4ca87021c3b2893133a9.jpg`; declared MD5 `dd932e5eb6170df1019c1ef3c9fe0b4b`. `vendor/wanger/spider.jpg` does not yet exist, so no mirrored Wang SHA-256 or actual MD5 is available before composition. |
+| Wang candidate | `https://9280.kstore.vip/aiwex.json`; candidate SHA-256 `b05dbe5d2902bef7f2c2b008bb9135b1f0eae3ef3a31bca8e9f54f3aa20bd43c` | Spider source `http://oss4liview.moji.com/thd_file/2026/08/14/f9c4d189ee5f4ca87021c3b2893133a9.jpg`; declared MD5 `dd932e5eb6170df1019c1ef3c9fe0b4b`. `vendor/wanger/spider.jpg` does not yet exist, so no mirrored Wang SHA-256 or actual MD5 is available before composition. |
 | Kimentanm seed | `https://raw.githubusercontent.com/Kimentanm/aptv/refs/heads/master/m3u/iptv.m3u` | `vendor/live/kimentanm.m3u` SHA-256 `c35c1109c98deda9122429e2e78bf9fd0bdd8ca0dc5dd1acd75c332a8b761422`; this is a seed, not either published automatic playlist. |
 
 The Nitan candidate metadata records SHA-256 `dc3d60a80fde8d3669c602a15d386058e240e0aabf1739d381fbb1f622c6ab8e`; the Wang candidate metadata records SHA-256 `20fd39d7c3e1406ac43029fa2c42d0708fbb2b6de4ee722251c9c5714654f354`. The table uses the byte-level hashes measured in this checkout.
