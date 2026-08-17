@@ -28,7 +28,7 @@ jobs:
       - name: Verify checked-in regional artifacts
         run: python scripts/refresh.py verify --regions us cn
 
-      - name: Refresh candidates and mirrored dependencies
+      - name: Refresh candidates
         if: github.event_name != 'pull_request'
         run: python scripts/refresh.py candidates
 
@@ -47,11 +47,12 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           # The allowlist intentionally omits all release artifacts.
-          git add candidates vendor/manifest.json vendor/nitan vendor/wanger health
+          git add candidates health
+          git restore --staged vendor 2>/dev/null || true
           git restore --staged stable 2>/dev/null || true
           git restore --staged vendor/live/auto-*.m3u 2>/dev/null || true
 
-          forbidden="$(git diff --cached --name-only | grep -E '^(stable/|vendor/live/auto-.*\.m3u$)' || true)"
+          forbidden="$(git diff --cached --name-only | grep -E '^(stable/|vendor/)' || true)"
           if [ -n "$forbidden" ]; then
             echo "Refusing to stage release artifacts:"
             echo "$forbidden"

@@ -49,7 +49,7 @@ The existing `candidates` command continues through all five sources:
 
 - require a top-level JSON object with a non-empty `sites` list;
 - keep Wang's existing exact 35-site curation check;
-- keep Nitan's existing mainland dependency mirroring;
+- do not refresh dependency mirrors; explicit `compose` owns that work;
 - save other valid source responses without trying to merge them into stable;
 - write `health/sources/<source-id>.json` after every attempt;
 - on failure, update health only and preserve the previous candidate files.
@@ -64,10 +64,10 @@ visible but does not break the scheduled refresh.
 
 ## Stable Boundary
 
-Candidate refresh cannot write `stable/**` or
-`vendor/live/auto-*.m3u`. The existing stable outputs remain 49 sites: 14 Nitan
-plus 35 curated Wang sites. Aowu, Fantaiying, and OK require a later explicit
-owner decision before any curated sites are added.
+Candidate refresh cannot write `stable/**`, `vendor/**`, or
+`vendor/live/auto-*.m3u`. The existing stable outputs remain 49 sites: 14
+Nitan plus 35 curated Wang sites. Aowu, Fantaiying, and OK require a later
+explicit owner decision before any curated sites are added.
 
 ## Testing and Completion
 

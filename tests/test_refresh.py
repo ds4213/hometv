@@ -754,10 +754,13 @@ class RefreshTests(unittest.TestCase):
             self.assertTrue((root / "candidates" / "example" / "upstream.json").exists())
             self.assertFalse((root / "stable").exists())
 
-    def test_mainland_candidate_refreshes_mirrored_dependencies(self):
+    def test_candidate_refresh_does_not_touch_dependency_mirrors(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             write_registry(root, source_id="nitan-dm")
+            manifest = root / "vendor/manifest.json"
+            manifest.parent.mkdir(parents=True)
+            manifest.write_bytes(b'{"known":"good"}\n')
 
             def fake_fetch(source):
                 return fetched(
@@ -769,15 +772,12 @@ class RefreshTests(unittest.TestCase):
                     },
                 )
 
-            def fake_mirror(requests, mirror_root):
-                for request in requests:
-                    path = mirror_root / request.repository_path
-                    path.parent.mkdir(parents=True, exist_ok=True)
-                    path.write_bytes(b"mirrored")
-                return {"files": []}
+            mirror = Mock()
 
-            refresh_candidates(root, fetcher=fake_fetch, mirror_func=fake_mirror)
-            self.assertEqual((root / "vendor" / "nitan" / "awdm.png").read_bytes(), b"mirrored")
+            refresh_candidates(root, fetcher=fake_fetch, mirror_func=mirror)
+
+            mirror.assert_not_called()
+            self.assertEqual(manifest.read_bytes(), b'{"known":"good"}\n')
 
     def test_promotion_writes_both_regions_after_validation(self):
         with tempfile.TemporaryDirectory() as temp_dir:

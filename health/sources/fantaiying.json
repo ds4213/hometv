@@ -1,0 +1,9 @@
+{
+  "source": "fantaiying",
+  "name": "饭太硬",
+  "url": "http://www.饭太硬.com/tv",
+  "checked_at": "2026-08-17T02:28:12.984670+00:00",
+  "status": "failed",
+  "blocking": false,
+  "message": "fantaiying: request failed: <urlopen error timed out>"
+}

@@ -52,14 +52,14 @@ git commit -m "Enable all five candidate sources"
 - [ ] Implement `_write_source_health(root, source, result)` in
   `hometv/refresh.py` using JSON plus a same-directory temporary replacement.
 - [ ] In `refresh_candidates`, validate `sites` as a non-empty list, retain
-  Wang's curation gate, run mainland mirroring only for Nitan, write a candidate
-  only after validation, then write health for both success and failure.
+  Wang's curation gate, do not touch dependency mirrors, write a candidate only
+  after validation, then write health for both success and failure.
 - [ ] Add `blocking` to every result. It is true only when a failed source has
   non-empty `stable_regions` or persistence itself fails.
 - [ ] Change the `candidates` CLI exit code to test `blocking`, not every backup
   source failure.
-- [ ] Keep workflow staging limited to `candidates`, `health`, and existing
-  Nitan/Wang mirror paths; keep the stable/live exclusions.
+- [ ] Keep candidate-generated writes limited to `candidates` and `health`;
+  keep the existing stable/live exclusions.
 - [ ] Run focused and full tests, then commit:
 
 ```powershell
@@ -108,9 +108,9 @@ python -m py_compile hometv/refresh.py scripts/refresh.py
 git diff --check
 ```
 
-- [ ] Stage only source registry, candidates, source health, README, evidence,
-  and existing Nitan/Wang mirrors. Explicitly exclude stable and automatic
-  playlists. Commit the honest current state.
+- [ ] Stage only source registry, candidates, source health, README, and
+  evidence. Explicitly exclude vendor, stable, and automatic playlists. Commit
+  the honest current state.
 
 ### Final Boundary
 

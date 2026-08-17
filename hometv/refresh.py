@@ -163,10 +163,6 @@ def refresh_candidates(
                 )
                 jar = f"{GITEE_RAW_BASE}/vendor/wanger/spider.jpg;md5;{digest}"
                 select_curated_sites(fetched.content, policy, jar)
-            if source.id == "nitan-dm" and "cn" in source.regions:
-                cn_build = build_cn(fetched.content, GITEE_RAW_BASE)
-                if cn_build.mirrors:
-                    mirror_func(cn_build.mirrors, root)
             path = write_candidate(fetched, root / "candidates")
             _record_candidate_bytes(path)
             result = {

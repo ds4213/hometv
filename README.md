@@ -23,7 +23,14 @@ Run these commands from a reviewed checkout. They deliberately separate untruste
 python scripts/refresh.py candidates
 ```
 
-Fetches enabled upstream interfaces into `candidates/`, refreshes approved mirrored dependencies and records health information. It cannot publish or replace `stable/*.json` or `vendor/live/auto-*.m3u`; scheduled automation has the same boundary.
+Checks all five configured upstream interfaces and saves usable responses under
+`candidates/`. Every attempt writes a small status file under
+`health/sources/`. A failed source keeps its previous candidate; Aowu,
+Fantaiying, and OK failures do not block Nitan and Wang from refreshing.
+
+This command does not update dependency mirrors and cannot publish or replace
+`vendor/**`, `stable/*.json`, or `vendor/live/auto-*.m3u`. A backup source is
+never added to the parents' stable configuration automatically.
 
 ### `compose`
 
@@ -56,7 +63,10 @@ The command rejects malformed, unsafe, overly small, or sharply reduced playlist
 
 Roll back by reverting the bad content commit on GitHub `main`, then synchronize that reviewed result to Gitee. Do not delete or rename the four permanent paths above. Never commit passwords, cookies, access tokens, cloud-drive credentials, signed personal URLs, or personal server keys.
 
-GitHub Actions refreshes candidates only. Its scheduled commit is restricted to candidate data, approved mirrored dependencies, manifests, and health reports; it explicitly excludes `stable/**` and automatic playlists. Pull requests run tests and static verification but never refresh, commit, or push release content.
+GitHub Actions refreshes candidates only. Its scheduled commit is restricted
+to candidate data and health reports; it explicitly excludes `vendor/**`,
+`stable/**`, and automatic playlists. Pull requests run tests and static
+verification but never refresh, commit, or push release content.
 
 ## Verification boundary
 
