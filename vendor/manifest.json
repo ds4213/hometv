@@ -1,14 +1,6 @@
 {
-  "generated_at": "2026-08-17T00:27:51.824001+00:00",
+  "generated_at": "2026-08-20T03:58:14.870285+00:00",
   "files": [
-    {
-      "source_url": "http://oss4liview.moji.com/thd_file/2026/08/14/f9c4d189ee5f4ca87021c3b2893133a9.jpg",
-      "path": "vendor/wanger/spider.jpg",
-      "bytes": 983208,
-      "sha256": "5acc35791d3cd08b0bcb3f04219db847aca1d75b2eda9e526b6af805d3691402",
-      "expected_md5": "dd932e5eb6170df1019c1ef3c9fe0b4b",
-      "md5": "dd932e5eb6170df1019c1ef3c9fe0b4b"
-    },
     {
       "source_url": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/awdm.png",
       "path": "vendor/nitan/awdm.png",

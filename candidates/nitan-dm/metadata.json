@@ -2,9 +2,7 @@
   "source_id": "nitan-dm",
   "source_name": "泥潭弹幕版",
   "source_url": "https://nitan.ggff.net/config-dm.json",
-  "fetched_at": "2026-08-17T02:27:51.940779+00:00",
+  "fetched_at": "2026-08-20T03:58:13.476316+00:00",
   "sha256": "dc3d60a80fde8d3669c602a15d386058e240e0aabf1739d381fbb1f622c6ab8e",
-  "bytes": 4686,
-  "candidate_bytes": 4336,
-  "candidate_sha256": "ed5f909cd3342ec2c4f6d6334b5e729f596ab2d235b731c43ab8c71f939a7113"
+  "bytes": 4686
 }
