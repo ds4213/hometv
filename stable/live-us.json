@@ -1,0 +1,27 @@
+{
+  "lives": [
+    {
+      "name": "HomeTV 自动（中国）",
+      "url": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/live/auto-us.m3u",
+      "boot": true,
+      "ua": "okhttp/4.12.0",
+      "timeout": 15
+    },
+    {
+      "name": "HomeTV 备用（Kimentanm）",
+      "url": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/live/kimentanm.m3u",
+      "boot": false,
+      "ua": "okhttp/4.12.0",
+      "timeout": 15,
+      "epg": "https://epg.aptv.app/pp.xml.gz,https://epg.aptv.app/xml"
+    },
+    {
+      "name": "HomeTV 临时赛事",
+      "url": "http://82.156.243.185:33389/fwc.m3u",
+      "boot": false,
+      "ua": "okhttp/4.12.0",
+      "timeout": 15,
+      "epg": "https://epg.zsdc.eu.org/t.xml"
+    }
+  ]
+}

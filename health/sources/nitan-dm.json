@@ -1,0 +1,10 @@
+{
+  "source": "nitan-dm",
+  "name": "泥潭弹幕版",
+  "url": "https://nitan.ggff.net/config-dm.json",
+  "checked_at": "2026-08-17T02:27:51.961238+00:00",
+  "status": "updated",
+  "blocking": false,
+  "path": "candidates/nitan-dm/upstream.json",
+  "sha256": "dc3d60a80fde8d3669c602a15d386058e240e0aabf1739d381fbb1f622c6ab8e"
+}

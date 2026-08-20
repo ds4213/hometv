@@ -1,0 +1,9 @@
+{
+  "source": "aowu",
+  "name": "嗷呜",
+  "url": "https://cnb.cool/aooooowuuuuu/FreeSpider/-/git/raw/main/config",
+  "checked_at": "2026-08-17T02:27:52.969664+00:00",
+  "status": "failed",
+  "blocking": false,
+  "message": "aowu: request failed: HTTP Error 404: Not Found"
+}

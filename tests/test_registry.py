@@ -7,17 +7,20 @@ from hometv.registry import RegistryError, load_registry
 
 
 class RegistryTests(unittest.TestCase):
-    def test_loads_nitan_as_initial_stable_source(self):
+    def test_production_registry_enables_exact_five_sources_for_both_regions(self):
         sources = load_registry(Path("sources/registry.json"))
-        nitan = next(source for source in sources if source.id == "nitan-dm")
-        self.assertEqual(nitan.regions, ("us", "cn"))
-        self.assertEqual(nitan.stable_regions, ("us", "cn"))
-
-    def test_dead_sources_are_disabled_with_reasons(self):
-        sources = load_registry(Path("sources/registry.json"))
-        aowu = next(source for source in sources if source.id == "aowu")
-        self.assertFalse(aowu.enabled)
-        self.assertIn("404", aowu.disabled_reason)
+        self.assertEqual(
+            [source.id for source in sources],
+            ["nitan-dm", "wangerxiao", "aowu", "fantaiying", "ok"],
+        )
+        self.assertTrue(all(source.enabled for source in sources))
+        self.assertTrue(all(source.regions == ("us", "cn") for source in sources))
+        stable = {source.id: source.stable_regions for source in sources}
+        self.assertEqual(stable["nitan-dm"], ("us", "cn"))
+        self.assertEqual(stable["wangerxiao"], ("us", "cn"))
+        self.assertEqual(stable["aowu"], ())
+        self.assertEqual(stable["fantaiying"], ())
+        self.assertEqual(stable["ok"], ())
 
     def test_rejects_duplicate_ids(self):
         payload = {

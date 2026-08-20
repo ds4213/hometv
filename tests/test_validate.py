@@ -5,7 +5,13 @@ import unittest
 from unittest.mock import patch
 import urllib.error
 
-from hometv.validate import ProbeResult, probe_http, validate_config, write_health_report
+from hometv.validate import (
+    ProbeResult,
+    probe_http,
+    validate_config,
+    validate_live_config,
+    write_health_report,
+)
 
 
 class FakeHeaders:
@@ -57,6 +63,151 @@ class ValidateTests(unittest.TestCase):
         }
         findings = validate_config(config, "cn")
         self.assertIn("mainland-github-url", {item.code for item in findings if item.severity == "error"})
+
+    def test_live_validation_accepts_a_complete_live_config(self):
+        config = {
+            "lives": [
+                {
+                    "name": "A",
+                    "url": "https://example.com/a.m3u",
+                    "boot": True,
+                    "ua": "okhttp/4.12.0",
+                    "timeout": 15,
+                }
+            ]
+        }
+        self.assertEqual(validate_live_config(config, "us"), [])
+
+    def test_live_validation_requires_unique_names_urls_and_one_boot(self):
+        config = {
+            "lives": [
+                {
+                    "name": "A",
+                    "url": "https://example.com/a.m3u",
+                    "boot": True,
+                    "ua": "okhttp/4.12.0",
+                    "timeout": 15,
+                },
+                {
+                    "name": "A",
+                    "url": "https://example.com/a.m3u",
+                    "boot": True,
+                    "ua": "okhttp/4.12.0",
+                    "timeout": 15,
+                },
+            ]
+        }
+        codes = {finding.code for finding in validate_live_config(config, "us")}
+        self.assertIn("duplicate-live-name", codes)
+        self.assertIn("duplicate-live-url", codes)
+        self.assertIn("invalid-live-boot-count", codes)
+
+    def test_live_validation_requires_non_empty_valid_entries(self):
+        config = {
+            "lives": [
+                {
+                    "name": "",
+                    "url": "ftp://example.com/a.m3u",
+                    "boot": False,
+                    "ua": "",
+                    "timeout": 0,
+                }
+            ]
+        }
+        codes = {finding.code for finding in validate_live_config(config, "us")}
+        self.assertIn("invalid-live-name", codes)
+        self.assertIn("invalid-live-url", codes)
+        self.assertIn("invalid-live-ua", codes)
+        self.assertIn("invalid-live-timeout", codes)
+        self.assertIn("invalid-live-boot-count", codes)
+
+    def test_live_validation_rejects_empty_or_non_object_config(self):
+        self.assertIn(
+            "invalid-live-config",
+            {finding.code for finding in validate_live_config([], "us")},
+        )
+        self.assertIn(
+            "invalid-lives",
+            {finding.code for finding in validate_live_config({"lives": []}, "us")},
+        )
+
+    def test_live_validation_applies_mainland_github_and_cleartext_rules(self):
+        config = {
+            "lives": [
+                {
+                    "name": "A",
+                    "url": "https://raw.githubusercontent.com/example/a.m3u",
+                    "boot": True,
+                    "ua": "okhttp/4.12.0",
+                    "timeout": 15,
+                    "epg": "http://example.com/epg.xml",
+                }
+            ]
+        }
+        findings = validate_live_config(config, "cn")
+        codes = {(item.severity, item.code) for item in findings}
+        self.assertIn(("error", "mainland-github-url"), codes)
+        self.assertIn(("warning", "cleartext-http"), codes)
+
+    def test_live_validation_rejects_unknown_region(self):
+        self.assertIn(
+            "invalid-region",
+            {finding.code for finding in validate_live_config({"lives": []}, "eu")},
+        )
+
+    def test_live_validation_marks_malformed_http_url_invalid_without_raising(self):
+        config = {
+            "lives": [
+                {
+                    "name": "A",
+                    "url": "https://[bad",
+                    "boot": True,
+                    "ua": "okhttp/4.12.0",
+                    "timeout": 15,
+                }
+            ]
+        }
+        codes = {finding.code for finding in validate_live_config(config, "us")}
+        self.assertIn("invalid-live-url", codes)
+
+    def test_live_validation_reports_malformed_recursive_url_without_raising(self):
+        config = {
+            "lives": [
+                {
+                    "name": "A",
+                    "url": "https://example.com/a.m3u",
+                    "boot": True,
+                    "ua": "okhttp/4.12.0",
+                    "timeout": 15,
+                    "epg": "HTTPS://[bad",
+                }
+            ]
+        }
+        findings = validate_live_config(config, "us")
+        self.assertIn(
+            ("error", "invalid-live-url", "$.lives[0].epg"),
+            {(item.severity, item.code, item.path) for item in findings},
+        )
+
+    def test_live_validation_recognizes_uppercase_http_schemes(self):
+        config = {
+            "lives": [
+                {
+                    "name": "A",
+                    "url": "HTTPS://raw.githubusercontent.com/example/a.m3u",
+                    "boot": True,
+                    "ua": "okhttp/4.12.0",
+                    "timeout": 15,
+                    "epg": "HTTP://example.com/epg.xml",
+                }
+            ]
+        }
+        codes = {
+            (finding.severity, finding.code)
+            for finding in validate_live_config(config, "cn")
+        }
+        self.assertIn(("error", "mainland-github-url"), codes)
+        self.assertIn(("warning", "cleartext-http"), codes)
 
     @patch("urllib.request.urlopen")
     def test_probe_rejects_html_error_page_with_200_status(self, urlopen):

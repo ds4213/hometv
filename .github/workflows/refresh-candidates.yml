@@ -21,14 +21,18 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Run tests
+      - name: Run complete unit suite
         run: python -m unittest discover -s tests -v
 
-      - name: Refresh candidates and mirrored dependencies
+      # PRs get this static check only; they never refresh or push repository data.
+      - name: Verify checked-in regional artifacts
+        run: python scripts/refresh.py verify --regions us cn
+
+      - name: Refresh candidates
         if: github.event_name != 'pull_request'
         run: python scripts/refresh.py candidates
 
-      - name: Verify stable files without claiming mainland origin
+      - name: Verify refreshed candidate context without claiming mainland origin
         if: github.event_name != 'pull_request'
         run: >-
           python scripts/refresh.py verify
@@ -41,7 +45,20 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add candidates vendor health
+
+          # The allowlist intentionally omits all release artifacts.
+          git add candidates health
+          git restore --staged vendor 2>/dev/null || true
+          git restore --staged stable 2>/dev/null || true
+          git restore --staged vendor/live/auto-*.m3u 2>/dev/null || true
+
+          forbidden="$(git diff --cached --name-only | grep -E '^(stable/|vendor/)' || true)"
+          if [ -n "$forbidden" ]; then
+            echo "Refusing to stage release artifacts:"
+            echo "$forbidden"
+            exit 1
+          fi
+
           if git diff --cached --quiet; then
             echo "No candidate changes"
           else

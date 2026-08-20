@@ -2,7 +2,9 @@
   "source_id": "wangerxiao",
   "source_name": "王二小主力三代",
   "source_url": "https://9280.kstore.vip/aiwex.json",
-  "fetched_at": "2026-08-20T03:58:15.520566+00:00",
-  "sha256": "de9a4fdcc41f955aecbbc8992adab47b400b9686b0c9b872701ec4fe66494a55",
-  "bytes": 24909
+  "fetched_at": "2026-08-17T02:27:52.146337+00:00",
+  "sha256": "20fd39d7c3e1406ac43029fa2c42d0708fbb2b6de4ee722251c9c5714654f354",
+  "bytes": 25728,
+  "candidate_bytes": 24936,
+  "candidate_sha256": "7dd87291c91cd4ec19f95cb42cd3765bd18fc109eabb055e1a8b553c2af3d0f0"
 }

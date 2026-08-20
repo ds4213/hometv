@@ -1,0 +1,9 @@
+{
+  "source": "ok",
+  "name": "OK",
+  "url": "http://ok213.top/tv",
+  "checked_at": "2026-08-17T02:28:12.988681+00:00",
+  "status": "failed",
+  "blocking": false,
+  "message": "ok: request failed: <urlopen error [Errno 11001] getaddrinfo failed>"
+}
