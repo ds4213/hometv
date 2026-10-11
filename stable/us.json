@@ -1,8 +1,91 @@
 {
-  "spider": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/awdm.png",
+  "spider": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/qist/fan-6840f979e76dc29a2de74a82b8280c12.txt;md5;6840f979e76dc29a2de74a82b8280c12",
   "wallpaper": "https://深色壁纸.xxooo.cf/",
   "danmaku": "http://127.0.0.1:2525/danmu?name={name}&epid={episode}",
   "sites": [
+    {
+      "key": "qist-fty:原创",
+      "name": "饭太硬·原创",
+      "type": 3,
+      "api": "csp_YCyzGuard",
+      "timeout": 15,
+      "playerType": 2,
+      "searchable": 1,
+      "quickSearch": 1,
+      "changeable": 1,
+      "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/qist/fan-6840f979e76dc29a2de74a82b8280c12.txt;md5;6840f979e76dc29a2de74a82b8280c12"
+    },
+    {
+      "key": "qist-fty:厂长",
+      "name": "饭太硬·厂长",
+      "type": 3,
+      "api": "csp_NewCzGuard",
+      "timeout": 10,
+      "playerType": 2,
+      "searchable": 1,
+      "quickSearch": 0,
+      "changeable": 1,
+      "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/qist/fan-6840f979e76dc29a2de74a82b8280c12.txt;md5;6840f979e76dc29a2de74a82b8280c12"
+    },
+    {
+      "key": "qist-fty:立播",
+      "name": "饭太硬·立播",
+      "type": 3,
+      "api": "csp_LibvioGuard",
+      "timeout": 10,
+      "searchable": 1,
+      "quickSearch": 0,
+      "changeable": 1,
+      "ext": {
+        "siteUrl": "https://www.libvio.pw/"
+      },
+      "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/qist/fan-6840f979e76dc29a2de74a82b8280c12.txt;md5;6840f979e76dc29a2de74a82b8280c12"
+    },
+    {
+      "key": "qist-fty:比特",
+      "name": "饭太硬·比特",
+      "type": 3,
+      "api": "csp_BttwooGuard",
+      "timeout": 10,
+      "searchable": 1,
+      "quickSearch": 0,
+      "changeable": 1,
+      "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/qist/fan-6840f979e76dc29a2de74a82b8280c12.txt;md5;6840f979e76dc29a2de74a82b8280c12"
+    },
+    {
+      "key": "qist-fty:糯米",
+      "name": "饭太硬·糯米",
+      "type": 3,
+      "api": "csp_NmyswvGuard",
+      "timeout": 15,
+      "searchable": 1,
+      "quickSearch": 1,
+      "changeable": 1,
+      "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/qist/fan-6840f979e76dc29a2de74a82b8280c12.txt;md5;6840f979e76dc29a2de74a82b8280c12"
+    },
+    {
+      "key": "qist-fty:文采",
+      "name": "饭太硬·文采",
+      "type": 3,
+      "api": "csp_JpysGuard",
+      "timeout": 10,
+      "playerType": 2,
+      "searchable": 1,
+      "quickSearch": 0,
+      "changeable": 1,
+      "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/qist/fan-6840f979e76dc29a2de74a82b8280c12.txt;md5;6840f979e76dc29a2de74a82b8280c12"
+    },
+    {
+      "key": "qist-fty:奥特",
+      "name": "饭太硬·奥特",
+      "type": 3,
+      "api": "csp_AueteGuard",
+      "timeout": 10,
+      "searchable": 1,
+      "quickSearch": 0,
+      "changeable": 1,
+      "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/qist/fan-6840f979e76dc29a2de74a82b8280c12.txt;md5;6840f979e76dc29a2de74a82b8280c12"
+    },
     {
       "name": "🔥豆瓣推荐",
       "key": "Douban",
@@ -13,7 +96,8 @@
       "filterable": 0,
       "quickSearch": 0,
       "changeable": 0,
-      "ext": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/db.aowu"
+      "ext": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/db.aowu",
+      "jar": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/awdm.png"
     },
     {
       "name": "⚙️配置|中心",
@@ -23,49 +107,64 @@
       "searchable": 0,
       "filterable": 0,
       "quickSearch": 0,
-      "changeable": 0
+      "changeable": 0,
+      "jar": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/awdm.png"
     },
     {
       "key": "月佬瓜子影视",
       "name": "月佬瓜子影视",
       "type": 4,
-      "api": "https://vod.catvod.ggff.net/guazi"
+      "api": "https://vod.catvod.ggff.net/guazi",
+      "quickSearch": 0,
+      "jar": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/awdm.png"
     },
     {
       "key": "Qile优视频",
       "name": "Qile优视频",
       "type": 4,
-      "api": "https://vod.catvod.ggff.net/uvod"
+      "api": "https://vod.catvod.ggff.net/uvod",
+      "quickSearch": 0,
+      "jar": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/awdm.png"
     },
     {
       "key": "嗷呜爱瓜TV",
       "name": "嗷呜爱瓜TV",
       "type": 4,
-      "api": "https://vod.catvod.ggff.net/aigua"
+      "api": "https://vod.catvod.ggff.net/aigua",
+      "quickSearch": 0,
+      "jar": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/awdm.png"
     },
     {
       "key": "独播库",
       "name": "独播库",
       "type": 4,
-      "api": "https://vod.catvod.ggff.net/duboku"
+      "api": "https://vod.catvod.ggff.net/duboku",
+      "quickSearch": 0,
+      "jar": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/awdm.png"
     },
     {
       "key": "欧乐影院",
       "name": "欧乐影院",
       "type": 4,
-      "api": "https://vod.catvod.ggff.net/oule"
+      "api": "https://vod.catvod.ggff.net/oule",
+      "quickSearch": 0,
+      "jar": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/awdm.png"
     },
     {
       "key": "荐片",
       "name": "荐片",
       "type": 4,
-      "api": "https://vod.catvod.ggff.net/jianpian"
+      "api": "https://vod.catvod.ggff.net/jianpian",
+      "quickSearch": 0,
+      "jar": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/awdm.png"
     },
     {
       "key": "嗷呜金牌影院",
       "name": "嗷呜金牌影院",
       "type": 3,
-      "api": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/py/py_jinpai.py"
+      "api": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/py/py_jinpai.py",
+      "quickSearch": 0,
+      "jar": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/awdm.png"
     },
     {
       "name": "嗷呜爱壹帆",
@@ -74,8 +173,9 @@
       "api": "csp_AiyfAmns",
       "searchable": 1,
       "filterable": 1,
-      "quickSearch": 1,
-      "changeable": 1
+      "quickSearch": 0,
+      "changeable": 1,
+      "jar": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/awdm.png"
     },
     {
       "key": "泥潭看球①",
@@ -87,7 +187,9 @@
       "changeable": 0,
       "style": {
         "type": "list"
-      }
+      },
+      "quickSearch": 0,
+      "jar": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/awdm.png"
     },
     {
       "key": "泥潭看球②",
@@ -99,7 +201,9 @@
       "changeable": 0,
       "style": {
         "type": "list"
-      }
+      },
+      "quickSearch": 0,
+      "jar": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/awdm.png"
     },
     {
       "key": "Qile看球",
@@ -111,13 +215,17 @@
       "changeable": 0,
       "style": {
         "type": "list"
-      }
+      },
+      "quickSearch": 0,
+      "jar": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/awdm.png"
     },
     {
       "key": "4K追剧",
       "name": "4K追剧",
       "type": 4,
-      "api": "https://vod.catvod.ggff.net/tg"
+      "api": "https://vod.catvod.ggff.net/tg",
+      "quickSearch": 0,
+      "jar": "https://github.com/nitan-tv/nitan/raw/refs/heads/main/awdm.png"
     }
   ],
   "lives": [

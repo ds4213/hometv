@@ -28,6 +28,7 @@ from hometv.curation import (
 from hometv.fetch import FetchedConfig, FetchError, fetch_config, write_candidate
 from hometv.live import PlaylistError, fetch_live_bytes, merge_playlists, validate_playlist
 from hometv.registry import Source, load_registry
+from hometv.us_vod import extend_us_vod
 from hometv.validate import (
     Finding,
     ProbeResult,
@@ -352,6 +353,9 @@ def compose_stable(
             )
             for region in ("us", "cn")
         }
+        vod["us"] = BuildResult(
+            extend_us_vod(root, vod["us"].config, GITHUB_RAW_BASE), vod["us"].mirrors
+        )
         live = {
             region: build_live_config(region, GITHUB_RAW_BASE, GITEE_RAW_BASE)
             for region in ("us", "cn")

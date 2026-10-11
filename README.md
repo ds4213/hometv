@@ -15,6 +15,25 @@ Set the point-on-demand URL in FongMi's `点播` setting and the matching live U
 
 ## Owner operations
 
+### US VOD update (2026-10-11)
+
+The US configuration adds the seven curated Qist/Fantaiying sites in
+`sources/us-vod.json`, with a pinned plugin snapshot and MD5 verification.
+Existing Nitan sites remain selectable with their original plugin. This update
+does not change mainland VOD or live playlists. Playback testing is owner-led;
+successful configuration loading is not a playback guarantee.
+
+To rebuild only US VOD from the checked-in snapshot:
+
+```powershell
+python scripts/us_vod.py --output stable/us.json
+```
+
+Both the selected keys and quick-search defaults can be edited in
+`sources/us-vod.json`. Update the snapshot, commit reference, and verified plugin
+together when adopting a new upstream version. No weekly auto-publishing or
+scheduled GitHub workflow has been enabled.
+
 Run these commands from a reviewed checkout. They deliberately separate untrusted upstream input from the files parents consume.
 
 ### `candidates`

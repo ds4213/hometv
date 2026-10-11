@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "source_id": "qist-fty",
+  "name_prefix": "饭太硬·",
+  "keys": ["原创", "厂长", "立播", "比特", "糯米", "文采", "奥特"],
+  "quick_search_keys": ["原创", "糯米"],
+  "commit": "70f8c5e9b846d881b7469abe9079b35aa0fdde31",
+  "spider_md5": "6840f979e76dc29a2de74a82b8280c12"
+}
