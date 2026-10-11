@@ -124,8 +124,8 @@
       "name": "🐮💓‍指南┃4K💓‍",
       "type": 3,
       "api": "csp_AiNewXiaoPanGuard",
-      "searchable": 1,
-      "quickSearch": 1,
+      "searchable": 0,
+      "quickSearch": 0,
       "changeable": 0,
       "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/wanger/spider.jpg;md5;dd932e5eb6170df1019c1ef3c9fe0b4b"
     },
@@ -134,8 +134,8 @@
       "name": "🐮💓‍玩偶┃4K💓‍",
       "type": 3,
       "api": "csp_AiNewWoggGuard",
-      "searchable": 1,
-      "quickSearch": 1,
+      "searchable": 0,
+      "quickSearch": 0,
       "changeable": 0,
       "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/wanger/spider.jpg;md5;dd932e5eb6170df1019c1ef3c9fe0b4b"
     },
