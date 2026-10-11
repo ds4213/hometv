@@ -144,8 +144,8 @@
       "name": "🐮💓‍观影┃4K💓‍",
       "type": 3,
       "api": "csp_AiNewGuanYingGuard",
-      "searchable": 1,
-      "quickSearch": 1,
+      "searchable": 0,
+      "quickSearch": 0,
       "changeable": 0,
       "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/wanger/spider.jpg;md5;dd932e5eb6170df1019c1ef3c9fe0b4b"
     },
@@ -154,8 +154,8 @@
       "name": "🐮💓‍七味┃4K💓‍",
       "type": 3,
       "api": "csp_AiQwMkvGuard",
-      "searchable": 1,
-      "quickSearch": 1,
+      "searchable": 0,
+      "quickSearch": 0,
       "changeable": 0,
       "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/wanger/spider.jpg;md5;dd932e5eb6170df1019c1ef3c9fe0b4b"
     },
@@ -164,8 +164,8 @@
       "name": "🐮💓至臻┃4K💓",
       "type": 3,
       "api": "csp_AiNewZhiZhenGuard",
-      "searchable": 1,
-      "quickSearch": 1,
+      "searchable": 0,
+      "quickSearch": 0,
       "changeable": 0,
       "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/wanger/spider.jpg;md5;dd932e5eb6170df1019c1ef3c9fe0b4b"
     },
@@ -174,8 +174,8 @@
       "name": "🐮💓立播┃4K💓",
       "type": 3,
       "api": "csp_AiNewLibvioGuard",
-      "searchable": 1,
-      "quickSearch": 1,
+      "searchable": 0,
+      "quickSearch": 0,
       "changeable": 0,
       "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/wanger/spider.jpg;md5;dd932e5eb6170df1019c1ef3c9fe0b4b"
     },
@@ -184,8 +184,8 @@
       "name": "🐮💥韩剧┃秒播💥",
       "type": 3,
       "api": "csp_WexAiHanXiaoQuanGuard",
-      "searchable": 1,
-      "quickSearch": 1,
+      "searchable": 0,
+      "quickSearch": 0,
       "changeable": 0,
       "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/wanger/spider.jpg;md5;dd932e5eb6170df1019c1ef3c9fe0b4b"
     },
@@ -194,8 +194,8 @@
       "name": "🐮💥瓜子┃秒播💥",
       "type": 3,
       "api": "csp_WexAiGuaZiGuard",
-      "searchable": 1,
-      "quickSearch": 1,
+      "searchable": 0,
+      "quickSearch": 0,
       "changeable": 0,
       "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/wanger/spider.jpg;md5;dd932e5eb6170df1019c1ef3c9fe0b4b"
     },
@@ -204,8 +204,8 @@
       "name": "🐮💥独播┃秒播💥",
       "type": 3,
       "api": "csp_WexAiDuBoKuGuard",
-      "searchable": 1,
-      "quickSearch": 1,
+      "searchable": 0,
+      "quickSearch": 0,
       "changeable": 0,
       "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/wanger/spider.jpg;md5;dd932e5eb6170df1019c1ef3c9fe0b4b"
     },
@@ -214,8 +214,8 @@
       "name": "🐮💥闪电┃秒播💥",
       "type": 3,
       "api": "csp_WexAiYueYueGuard",
-      "searchable": 1,
-      "quickSearch": 1,
+      "searchable": 0,
+      "quickSearch": 0,
       "changeable": 0,
       "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/wanger/spider.jpg;md5;dd932e5eb6170df1019c1ef3c9fe0b4b"
     },
@@ -224,8 +224,8 @@
       "name": "🐮💥文才┃秒播💥",
       "type": 3,
       "api": "csp_WexAiWenCaiGuard",
-      "searchable": 1,
-      "quickSearch": 1,
+      "searchable": 0,
+      "quickSearch": 0,
       "changeable": 0,
       "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/wanger/spider.jpg;md5;dd932e5eb6170df1019c1ef3c9fe0b4b"
     },
@@ -234,8 +234,8 @@
       "name": "🐮💥师兄┃秒播💥",
       "type": 3,
       "api": "csp_WexAiV6DaShiXiongGuard",
-      "searchable": 1,
-      "quickSearch": 1,
+      "searchable": 0,
+      "quickSearch": 0,
       "changeable": 0,
       "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/wanger/spider.jpg;md5;dd932e5eb6170df1019c1ef3c9fe0b4b"
     },
@@ -244,8 +244,8 @@
       "name": "🐮💥太狗┃秒播💥",
       "type": 3,
       "api": "csp_WexAiV6TeGouGuard",
-      "searchable": 1,
-      "quickSearch": 1,
+      "searchable": 0,
+      "quickSearch": 0,
       "changeable": 0,
       "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/wanger/spider.jpg;md5;dd932e5eb6170df1019c1ef3c9fe0b4b"
     },
@@ -254,8 +254,8 @@
       "name": "🐮💥贱片┃秒播💥",
       "type": 3,
       "api": "csp_WexAiJianPianGuard",
-      "searchable": 1,
-      "quickSearch": 1,
+      "searchable": 0,
+      "quickSearch": 0,
       "changeable": 0,
       "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/wanger/spider.jpg;md5;dd932e5eb6170df1019c1ef3c9fe0b4b"
     },
@@ -264,8 +264,8 @@
       "name": "🐮💥伊影┃秒播💥",
       "type": 3,
       "api": "csp_WexAiYiYsGuard",
-      "searchable": 1,
-      "quickSearch": 1,
+      "searchable": 0,
+      "quickSearch": 0,
       "changeable": 0,
       "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/wanger/spider.jpg;md5;dd932e5eb6170df1019c1ef3c9fe0b4b"
     },
@@ -274,8 +274,8 @@
       "name": "🐮💥热播┃秒播💥",
       "type": 3,
       "api": "csp_WexAiReBoGuard",
-      "searchable": 1,
-      "quickSearch": 1,
+      "searchable": 0,
+      "quickSearch": 0,
       "changeable": 0,
       "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/wanger/spider.jpg;md5;dd932e5eb6170df1019c1ef3c9fe0b4b"
     },
@@ -284,8 +284,8 @@
       "name": "🐮🎇伯伯┃秒播🎇",
       "type": 3,
       "api": "csp_WexAiBoBoGuard",
-      "searchable": 1,
-      "quickSearch": 1,
+      "searchable": 0,
+      "quickSearch": 0,
       "changeable": 0,
       "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/wanger/spider.jpg;md5;dd932e5eb6170df1019c1ef3c9fe0b4b"
     },
@@ -294,8 +294,8 @@
       "name": "🐮🎇爱看┃采集🎇",
       "type": 3,
       "api": "csp_WexAiIkanBotGuard",
-      "searchable": 1,
-      "quickSearch": 1,
+      "searchable": 0,
+      "quickSearch": 0,
       "changeable": 0,
       "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/wanger/spider.jpg;md5;dd932e5eb6170df1019c1ef3c9fe0b4b"
     },
@@ -305,7 +305,7 @@
       "type": 3,
       "类型": "短剧",
       "api": "csp_DuanJuAiHaoKanGuard",
-      "searchable": 1,
+      "searchable": 0,
       "changeable": 0,
       "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/wanger/spider.jpg;md5;dd932e5eb6170df1019c1ef3c9fe0b4b"
     },
@@ -315,7 +315,7 @@
       "type": 3,
       "类型": "短剧",
       "api": "csp_DuanJuAiQiMiaoGuard",
-      "searchable": 1,
+      "searchable": 0,
       "changeable": 0,
       "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/wanger/spider.jpg;md5;dd932e5eb6170df1019c1ef3c9fe0b4b"
     },
@@ -325,7 +325,7 @@
       "type": 3,
       "类型": "短剧",
       "api": "csp_DuanJuAiXingYaGuard",
-      "searchable": 1,
+      "searchable": 0,
       "changeable": 0,
       "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/wanger/spider.jpg;md5;dd932e5eb6170df1019c1ef3c9fe0b4b"
     },
@@ -334,7 +334,7 @@
       "name": "🐮🤡稀饭┃动漫🤡",
       "type": 3,
       "api": "csp_AnimeXiFanGuard",
-      "searchable": 1,
+      "searchable": 0,
       "changeable": 0,
       "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/wanger/spider.jpg;md5;dd932e5eb6170df1019c1ef3c9fe0b4b"
     },
@@ -343,7 +343,7 @@
       "name": "🐮🤡次元┃动漫🤡",
       "type": 3,
       "api": "csp_AnimeCiYuanChengGuard",
-      "searchable": 1,
+      "searchable": 0,
       "changeable": 0,
       "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/wanger/spider.jpg;md5;dd932e5eb6170df1019c1ef3c9fe0b4b"
     },
@@ -352,7 +352,7 @@
       "name": "🐮🤡喵呜┃动漫🤡",
       "type": 3,
       "api": "csp_AnimeAiMiaoWuGuard",
-      "searchable": 1,
+      "searchable": 0,
       "changeable": 0,
       "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/wanger/spider.jpg;md5;dd932e5eb6170df1019c1ef3c9fe0b4b"
     },
@@ -361,7 +361,7 @@
       "name": "🐮👼宝宝┃儿歌👼",
       "type": 3,
       "api": "csp_ChildrenAiBaoBaoGuard",
-      "searchable": 1,
+      "searchable": 0,
       "changeable": 0,
       "style": {
         "type": "rect",
@@ -374,7 +374,7 @@
       "name": "🐮👼贝贝┃儿歌👼",
       "type": 3,
       "api": "csp_ChildrenAiBeiWaGuard",
-      "searchable": 1,
+      "searchable": 0,
       "changeable": 0,
       "style": {
         "type": "rect",
@@ -387,7 +387,7 @@
       "name": "🐮🎎戏曲┃秒播🎎",
       "type": 3,
       "api": "csp_MusicAiLiYuanGuard",
-      "searchable": 1,
+      "searchable": 0,
       "changeable": 0,
       "style": {
         "type": "rect",
@@ -400,7 +400,7 @@
       "name": "🐮🎼KTV┃音乐🎼",
       "type": 3,
       "api": "csp_MusicAiIKtvGuard",
-      "searchable": 1,
+      "searchable": 0,
       "changeable": 0,
       "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/wanger/spider.jpg;md5;dd932e5eb6170df1019c1ef3c9fe0b4b"
     },
@@ -409,7 +409,7 @@
       "name": "🐮🎼酷听┃音乐🎼",
       "type": 3,
       "api": "csp_MusicAiKuWoGuard",
-      "searchable": 1,
+      "searchable": 0,
       "changeable": 0,
       "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/wanger/spider.jpg;md5;dd932e5eb6170df1019c1ef3c9fe0b4b"
     },
@@ -418,7 +418,7 @@
       "name": "🐮🌐飞球┃体育🌐",
       "type": 3,
       "api": "csp_SportAiFeiQiuGuard",
-      "searchable": 1,
+      "searchable": 0,
       "changeable": 0,
       "style": {
         "type": "list"
@@ -430,7 +430,7 @@
       "name": "🐮🌐瓜子┃体育🌐",
       "type": 3,
       "api": "csp_SportAiGuaZiGuard",
-      "searchable": 1,
+      "searchable": 0,
       "changeable": 0,
       "style": {
         "type": "list"
@@ -442,7 +442,7 @@
       "name": "🐮🌐球通┃体育🌐",
       "type": 3,
       "api": "csp_SportAiKanQiuTongGuard",
-      "searchable": 1,
+      "searchable": 0,
       "changeable": 0,
       "style": {
         "type": "list"
@@ -454,7 +454,7 @@
       "name": "🐮🌐八八┃体育🌐",
       "type": 3,
       "api": "csp_SportAiKanqiuGuard",
-      "searchable": 1,
+      "searchable": 0,
       "changeable": 0,
       "jar": "https://raw.githubusercontent.com/ds4213/hometv/main/vendor/wanger/spider.jpg;md5;dd932e5eb6170df1019c1ef3c9fe0b4b"
     },
