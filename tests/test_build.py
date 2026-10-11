@@ -192,7 +192,7 @@ class BuildTests(unittest.TestCase):
                 mirror_files((request,), root)
             self.assertEqual(path.read_bytes(), b"known-good")
 
-    def test_curated_build_keeps_nitan_global_and_isolates_wanger(self):
+    def test_curated_build_omits_wanger_from_us_and_keeps_it_in_cn(self):
         policy = CuratedSource("wangerxiao", "🐮", ("wang",))
         nitan = {"spider": "https://nitan/spider.png", "sites": [{"key": "nitan", "name": "泥潭"}], "lives": []}
         wanger = {"spider": "https://upstream/spider.jpg;md5;0123456789abcdef0123456789abcdef", "sites": [
@@ -201,10 +201,11 @@ class BuildTests(unittest.TestCase):
         us = build_curated_vod(nitan, wanger, policy, "us", "https://raw.githubusercontent.com/o/r/main", "https://gitee.com/o/r/raw/main")
         cn = build_curated_vod(nitan, wanger, policy, "cn", "https://raw.githubusercontent.com/o/r/main", "https://gitee.com/o/r/raw/main")
         self.assertEqual(us.config["spider"], nitan["spider"])
-        self.assertEqual(us.config["sites"][1]["jar"], "https://raw.githubusercontent.com/o/r/main/vendor/wanger/spider.jpg;md5;0123456789abcdef0123456789abcdef")
+        self.assertEqual([site["key"] for site in us.config["sites"]], ["nitan"])
+        self.assertEqual(us.mirrors, ())
         self.assertEqual(cn.config["sites"][1]["jar"], "https://gitee.com/o/r/raw/main/vendor/wanger/spider.jpg;md5;0123456789abcdef0123456789abcdef")
         self.assertEqual(cn.config["sites"][1]["ext"], {"keep": True})
-        self.assertEqual([item.repository_path for item in us.mirrors], ["vendor/wanger/spider.jpg"])
+        self.assertEqual([item.repository_path for item in cn.mirrors], ["vendor/wanger/spider.jpg"])
 
     @patch("urllib.request.urlopen")
     def test_wanger_mirror_rejects_md5_mismatch_and_keeps_previous(self, urlopen):

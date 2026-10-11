@@ -175,6 +175,10 @@ class RefreshTests(unittest.TestCase):
             )
             self.assertEqual(
                 len(json.loads((root / "stable/us.json").read_text(encoding="utf-8"))["sites"]),
+                nitan_count,
+            )
+            self.assertEqual(
+                len(json.loads((root / "stable/cn.json").read_text(encoding="utf-8"))["sites"]),
                 nitan_count + 35,
             )
             self.assertEqual(set(generated_snapshot(root)), set(GENERATED_PATHS))

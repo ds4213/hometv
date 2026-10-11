@@ -136,8 +136,7 @@ def build_curated_vod(
     gitee_base: str,
 ) -> BuildResult:
     if region == "us":
-        base = BuildResult(config=build_us(nitan), mirrors=())
-        regional_base = github_base
+        return BuildResult(config=build_us(nitan), mirrors=())
     elif region == "cn":
         base = build_cn(nitan, gitee_base)
         regional_base = gitee_base
