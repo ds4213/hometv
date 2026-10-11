@@ -179,7 +179,7 @@ class RefreshTests(unittest.TestCase):
             )
             self.assertEqual(
                 len(json.loads((root / "stable/cn.json").read_text(encoding="utf-8"))["sites"]),
-                nitan_count + 35,
+                nitan_count,
             )
             self.assertEqual(set(generated_snapshot(root)), set(GENERATED_PATHS))
             self.assertNotIn(b"rtmp://", (root / "vendor/live/auto-us.m3u").read_bytes())
@@ -197,7 +197,7 @@ class RefreshTests(unittest.TestCase):
             )
 
             requests = mirror.call_args.args[0]
-            self.assertEqual([item.repository_path for item in requests].count("vendor/wanger/spider.jpg"), 1)
+            self.assertEqual([item.repository_path for item in requests].count("vendor/wanger/spider.jpg"), 0)
 
     def test_compose_rejects_conflicting_mirror_requests(self):
         with self.assertRaisesRegex(RefreshError, "conflicting mirror requests"):
@@ -208,17 +208,21 @@ class RefreshTests(unittest.TestCase):
                 )
             )
 
-    def test_missing_wanger_key_keeps_all_known_good_generated_files(self):
+    def test_missing_wanger_key_does_not_block_compose(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
             prepare_compose_root(root)
-            originals = seed_known_good_generated(root)
             remove_candidate_key(root, "SportAiKanqiu")
 
-            with self.assertRaisesRegex(RefreshError, "missing curated keys: SportAiKanqiu"):
-                refresh.compose_stable(root, mirror_func=Mock(), event_fetcher=lambda _url: b"")
-
-            self.assertEqual(generated_snapshot(root), originals)
+            refresh.compose_stable(
+                root,
+                mirror_func=Mock(),
+                event_fetcher=lambda _url: (_ for _ in ()).throw(urllib.error.URLError("offline")),
+            )
+            self.assertEqual(
+                len(json.loads((root / "stable/cn.json").read_text(encoding="utf-8"))["sites"]),
+                len(json.loads((root / "candidates/nitan-dm/upstream.json").read_text(encoding="utf-8"))["sites"]),
+            )
 
     def test_compose_falls_back_only_for_expected_event_network_failure(self):
         with tempfile.TemporaryDirectory() as temp_dir:

@@ -9,12 +9,7 @@ from pathlib import Path, PurePosixPath
 import urllib.error
 import urllib.request
 
-from .curation import (
-    CuratedSource,
-    merge_curated_sites,
-    parse_spider_reference,
-    select_curated_sites,
-)
+from .curation import CuratedSource
 
 
 MAX_MIRROR_BYTES = 25 * 1024 * 1024
@@ -138,19 +133,9 @@ def build_curated_vod(
     if region == "us":
         return BuildResult(config=build_us(nitan), mirrors=())
     elif region == "cn":
-        base = build_cn(nitan, gitee_base)
-        regional_base = gitee_base
+        return build_cn(nitan, gitee_base)
     else:
         raise BuildError(f"unsupported region: {region}")
-
-    source_url, _algorithm, digest = parse_spider_reference(wanger.get("spider"))
-    repository_path = "vendor/wanger/spider.jpg"
-    jar = f"{_target(regional_base, repository_path)};md5;{digest}"
-    selected = select_curated_sites(wanger, policy, jar)
-    return BuildResult(
-        config=merge_curated_sites(base.config, selected),
-        mirrors=base.mirrors + (MirrorRequest(source_url, repository_path, digest),),
-    )
 
 
 def build_live_config(region: str, github_base: str, gitee_base: str) -> dict:

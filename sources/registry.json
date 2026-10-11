@@ -15,7 +15,7 @@
       "url": "https://9280.kstore.vip/aiwex.json",
       "regions": ["us", "cn"],
       "enabled": true,
-      "stable_regions": ["cn"]
+      "stable_regions": []
     },
     {
       "id": "aowu",

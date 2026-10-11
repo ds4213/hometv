@@ -17,7 +17,7 @@ class RegistryTests(unittest.TestCase):
         self.assertTrue(all(source.regions == ("us", "cn") for source in sources))
         stable = {source.id: source.stable_regions for source in sources}
         self.assertEqual(stable["nitan-dm"], ("us", "cn"))
-        self.assertEqual(stable["wangerxiao"], ("cn",))
+        self.assertEqual(stable["wangerxiao"], ())
         self.assertEqual(stable["aowu"], ())
         self.assertEqual(stable["fantaiying"], ())
         self.assertEqual(stable["ok"], ())

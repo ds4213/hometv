@@ -192,7 +192,7 @@ class BuildTests(unittest.TestCase):
                 mirror_files((request,), root)
             self.assertEqual(path.read_bytes(), b"known-good")
 
-    def test_curated_build_omits_wanger_from_us_and_keeps_it_in_cn(self):
+    def test_curated_build_omits_wanger_from_both_regions(self):
         policy = CuratedSource("wangerxiao", "🐮", ("wang",))
         nitan = {"spider": "https://nitan/spider.png", "sites": [{"key": "nitan", "name": "泥潭"}], "lives": []}
         wanger = {"spider": "https://upstream/spider.jpg;md5;0123456789abcdef0123456789abcdef", "sites": [
@@ -203,9 +203,8 @@ class BuildTests(unittest.TestCase):
         self.assertEqual(us.config["spider"], nitan["spider"])
         self.assertEqual([site["key"] for site in us.config["sites"]], ["nitan"])
         self.assertEqual(us.mirrors, ())
-        self.assertEqual(cn.config["sites"][1]["jar"], "https://gitee.com/o/r/raw/main/vendor/wanger/spider.jpg;md5;0123456789abcdef0123456789abcdef")
-        self.assertEqual(cn.config["sites"][1]["ext"], {"keep": True})
-        self.assertEqual([item.repository_path for item in cn.mirrors], ["vendor/wanger/spider.jpg"])
+        self.assertEqual([site["key"] for site in cn.config["sites"]], ["nitan"])
+        self.assertEqual(cn.mirrors, ())
 
     @patch("urllib.request.urlopen")
     def test_wanger_mirror_rejects_md5_mismatch_and_keeps_previous(self, urlopen):
